@@ -13,7 +13,7 @@
 <p align="center">
   <a href="https://github.com/MCsumz/ONT-Plus/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/MCsumz/ONT-Plus?style=flat-square&color=22de5f" /></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPLv3-22de5f?style=flat-square" /></a>
-  <img alt="Platform" src="https://img.shields.io/badge/platform-Android-lightgrey?style=flat-square" />
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey?style=flat-square" />
   <a href="https://github.com/simonoppowa/OpenNutriTracker"><img alt="Upstream" src="https://img.shields.io/badge/upstream-OpenNutriTracker%202.7.0-blue?style=flat-square" /></a>
 </p>
 
@@ -32,7 +32,9 @@ Everything from OpenNutriTracker 2.7.0, plus:
   **Save changes**. The day's totals adjust by the difference.
 - In the Diary, **Copy to today** for past days now lives in each food's ⋮ menu, so long-press is free for dragging.
 
-## Install (Android)
+## Install
+
+### Android
 
 1. Download `ONT-Plus-<version>.apk` from the [latest release](https://github.com/MCsumz/ONT-Plus/releases/latest).
 2. Open it on your phone and allow installing from your browser or file manager when Android asks.
@@ -40,7 +42,13 @@ Everything from OpenNutriTracker 2.7.0, plus:
 ONT Plus installs **next to** the official OpenNutriTracker as its own app, so both can stay on
 the phone while you move over.
 
-iOS builds are not provided yet and have not been tested.
+### iOS (15.5 or later)
+
+The release also carries `ONT-Plus-<version>.ipa`. It is **unsigned**: install it with a sideloading
+tool such as [AltStore](https://altstore.io), [Sideloadly](https://sideloadly.io) or TrollStore,
+which signs it with your own Apple ID. With a free Apple ID that signature lasts 7 days and has to
+be refreshed, and the home-screen widget may not work. The iOS build has not been tested on a
+device yet.
 
 ### Moving your data from OpenNutriTracker
 
@@ -72,6 +80,10 @@ cp .env.example .env              # placeholders are fine for a local build
 fvm flutter pub get
 fvm dart run build_runner build --delete-conflicting-outputs
 fvm flutter build apk --flavor develop --debug
+
+# iOS, unsigned (CocoaPods; Swift Package Manager off, as upstream's CI does)
+fvm flutter config --no-enable-swift-package-manager
+fvm flutter build ios --release --flavor develop --no-codesign
 ```
 
 Releases use the `develop` flavor (label **ONT Plus**, package `….opennutritracker.develop`)
