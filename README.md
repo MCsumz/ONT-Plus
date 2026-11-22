@@ -21,6 +21,21 @@
 
 Everything from OpenNutriTracker 2.7.0, plus:
 
+- **Swipe through your days on Home** — Home opens on today; swipe left for the next day, right for
+  the previous one, and the page slides along with your finger. A date bar has arrows, a calendar
+  and a **Today** button. Past days show what you logged against that day's goal; days ahead are
+  for planning, and whatever you add there is logged on that day. The Diary stays the overview
+  and archive.
+- **Sync with your other phone** — keep ONT+ on two phones (Android and iPhone alike) in step: one
+  shows a QR code, the other scans it, and both end up with the same data. Entries added, edited
+  or deleted on either phone since the last sync are carried over — a deletion is not brought back
+  by the other phone. It runs over your Wi-Fi or hotspot only, encrypted with a one-time key in the
+  code; no server, no account. A brand-new phone can take everything, profile included, straight
+  from the welcome screen.
+- **All-inclusive backup** — the JSON export now holds everything: diary, activities, goal history,
+  the full weight log, water, fasting sessions, recipes, custom foods, favourites, photos, the body
+  profile from the first-time setup and your preferences (theme, units, food databases, display
+  options, day start). Importing merges by entry, so nothing is overwritten wholesale.
 - **Swipe to delete** — swipe a logged food left and confirm. Replaces dragging it onto the trash bar.
 - **Move between meals** — long-press a food and drag it onto Breakfast, Lunch, Dinner or Snack.
   The target section lights up, and the page scrolls while you hold the food near the top or bottom.
@@ -59,10 +74,15 @@ apps don't share data. To bring your history over:
 2. In **ONT+**: complete the first-time setup, then Settings → Import and pick that file.
 3. Check your diary, then uninstall OpenNutriTracker if you like.
 
-The JSON export carries your diary, activities, goal history, weight log, recipes, favourites,
-photos and goal settings. The body profile from the first-time setup (height, age, sex, activity
-level) is not part of it, so you enter that once. The CSV export only covers diary entries,
-activities and daily totals — use JSON for a full move.
+The original app's export leaves out the body profile from the first-time setup, so you enter
+that once. Between two ONT+ installs nothing needs re-entering: use **Sync with another phone**
+or ONT+'s own JSON export, which includes everything. CSV exports only cover diary entries,
+activities and daily totals.
+
+### Updating ONT+
+
+Install a newer ONT+ APK over the one you have; your data stays. Make a JSON backup first if you
+like (Settings → Export).
 
 ## Known limitations
 
@@ -70,6 +90,8 @@ activities and daily totals — use JSON for a full move.
   builds; food search uses Open Food Facts, plus your own foods and recipes.
 - Crash reporting (Sentry) is not configured.
 - Translations of the new texts fall back to English.
+- Phone-to-phone sync needs both phones on the same Wi-Fi or hotspot and the same ONT+ version.
+  It carries the active profile; AI keys, reminders and health-app links stay per phone.
 
 ## Privacy
 
