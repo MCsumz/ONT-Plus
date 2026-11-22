@@ -3,6 +3,7 @@ import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
 import 'package:opennutritracker/core/styles/app_palette.dart';
 import 'package:opennutritracker/core/styles/dimens.dart';
+import 'package:opennutritracker/core/utils/energy_display.dart';
 import 'package:opennutritracker/core/utils/extensions.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -119,6 +120,9 @@ class _DiaryTableCalendarState extends State<DiaryTableCalendar> {
           // heading sits in a `SizedBox` of this height, and a tight
           // constraint squeezes its child rather than overflowing (#766).
           daysOfWeekHeight: _weekdayRowHeight(context, weekdayStyle),
+          // Taller than the package's 52 so each logged day has room for its
+          // net +/- value under the date.
+          rowHeight: 60,
           focusedDay: widget.focusedDate,
           // The package marks DateTime.now() as today unless told
           // otherwise; the Diary's today is the logical day (#1360).
@@ -163,21 +167,46 @@ class _DiaryTableCalendarState extends State<DiaryTableCalendar> {
               // row's totals: a zero-calorie entry still counts as logged,
               // and a deleted entry can leave a rounding residue behind.
               if (trackedDay != null && widget.daysWithEntries.contains(key)) {
-                return Container(
-                  margin: const EdgeInsets.only(top: 10),
-                  padding: const EdgeInsets.all(1),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: trackedDay.getCalendarDayRatingColor(context),
-                  ),
-                  width: 5.0,
-                  height: 5.0,
-                );
+                return _NetKcalMarker(trackedDay: trackedDay);
               } else {
                 return const SizedBox();
               }
             },
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The day's net balance under its date: "+350" still left under the goal,
+/// "\u2212200" over it. The goal already includes that day's activities.
+class _NetKcalMarker extends StatelessWidget {
+  final TrackedDayEntity trackedDay;
+
+  const _NetKcalMarker({required this.trackedDay});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final net = EnergyDisplay.displayValue(
+      context,
+      trackedDay.calorieGoal - trackedDay.caloriesTracked,
+    );
+    final isOver = net < 0;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          '${isOver ? '\u2212' : '+'}${net.abs()}',
+          maxLines: 1,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                fontSize: 9.5,
+                height: 1.0,
+                fontWeight: FontWeight.w700,
+                color: isOver ? colorScheme.error : colorScheme.primary,
+              ),
         ),
       ),
     );

@@ -1570,5 +1570,55 @@
   "removeIngredientLabel": "Remove ingredient",
   "@removeIngredientLabel": {
     "description": "Tooltip and screen reader label of the delete button on a recipe ingredient row."
+  },
+  "moveToMealLabel": "Move to…",
+  "@moveToMealLabel": {
+    "description": "Menu item on a logged food that moves it to another meal section of the same day."
+  },
+  "moveDialogTitle": "Which meal do you want to move this to?",
+  "itemMovedSnackbar": "Moved to {meal}",
+  "@itemMovedSnackbar": {
+    "placeholders": {
+      "meal": { "type": "String" }
+    }
+  },
+  "swipeToDeleteLabel": "Delete",
+  "@swipeToDeleteLabel": {
+    "description": "Label shown behind a logged food while it is swiped left to delete it."
+  },
+  "diaryNetKcalLeft": "{value} left",
+  "@diaryNetKcalLeft": {
+    "description": "Diary day card: energy still available under the day's goal, e.g. '+350 kcal left'.",
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
+  "diaryNetKcalOver": "{value} over",
+  "@diaryNetKcalOver": {
+    "description": "Diary day card: energy eaten above the day's goal, e.g. '-200 kcal over'.",
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
+  "diaryNetKcalBreakdown": "{eaten} eaten · {burned} burned · goal {goal}",
+  "@diaryNetKcalBreakdown": {
+    "description": "Diary day card: how the net value is made up. The goal already includes the energy burned by activities.",
+    "placeholders": {
+      "eaten": { "type": "String" },
+      "burned": { "type": "String" },
+      "goal": { "type": "String" }
+    }
+  },
+  "editLoggedEntryTitle": "Edit logged food",
+  "@editLoggedEntryTitle": {
+    "description": "Title of the food detail screen when it was opened from an entry already logged, to change it."
+  },
+  "saveChangesLabel": "Save changes",
+  "@saveChangesLabel": {
+    "description": "Button on the food detail screen that stores the changed amount, unit and meal of a logged entry."
+  },
+  "editLoggedEntryMealLabel": "Meal",
+  "@editLoggedEntryMealLabel": {
+    "description": "Label above the Breakfast / Lunch / Dinner / Snack choice when editing a logged entry."
   }
 }

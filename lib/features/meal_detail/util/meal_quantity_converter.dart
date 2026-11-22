@@ -67,3 +67,32 @@ double? kcalForQuantity(double quantity, String unit, MealEntity meal) {
   if (energyPerUnit == null) return null;
   return convertQuantityToBaseUnit(quantity, unit, meal) * energyPerUnit;
 }
+
+/// The inverse of [convertQuantityToBaseUnit]: what a stored amount in grams
+/// or millilitres reads as in [unit]. Used to pre-fill the detail screen
+/// when a logged entry is opened for editing.
+double convertBaseUnitToQuantity(
+  double baseAmount,
+  String unit,
+  MealEntity meal,
+) {
+  if (isPortionUnit(unit) && meal.portions.isNotEmpty) {
+    final index = effectivePortionIndex(unit);
+    if (index < meal.portions.length && meal.portions[index].gramWeight > 0) {
+      return baseAmount / meal.portions[index].gramWeight;
+    }
+  }
+  if (storedUnit(unit) == UnitDropdownItem.serving.toString()) {
+    final servingQuantity = meal.scalableServingQuantity;
+    return servingQuantity != null && servingQuantity > 0
+        ? baseAmount / servingQuantity
+        : baseAmount;
+  }
+  if (unit == UnitDropdownItem.oz.toString()) {
+    return UnitCalc.gToOz(baseAmount);
+  }
+  if (unit == UnitDropdownItem.flOz.toString()) {
+    return UnitCalc.mlToFlOz(baseAmount);
+  }
+  return baseAmount;
+}

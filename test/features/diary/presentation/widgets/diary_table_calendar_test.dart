@@ -4,7 +4,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
 import 'package:opennutritracker/features/diary/presentation/widgets/diary_table_calendar.dart';
+import 'package:opennutritracker/core/utils/energy_unit_provider.dart';
 import 'package:opennutritracker/generated/l10n.dart';
+import 'package:provider/provider.dart';
 
 Widget _app({
   double textScale = 1.0,
@@ -12,7 +14,9 @@ Widget _app({
   Map<String, TrackedDayEntity> trackedDaysMap = const {},
   Set<String> daysWithEntries = const {},
 }) =>
-    MediaQuery(
+    ChangeNotifierProvider<EnergyUnitProvider>(
+      create: (_) => EnergyUnitProvider(),
+      child: MediaQuery(
       data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
       child: MaterialApp(
         locale: locale,
@@ -35,6 +39,7 @@ Widget _app({
           ),
         ),
       ),
+    ),
     );
 
 void main() {
@@ -118,11 +123,22 @@ void main() {
         fatTracked: 0,
         proteinTracked: 0,
       );
+  // A logged day is marked with its net value: "+200" left, "\u2212300" over.
   final markers = find.byWidgetPredicate(
-    (w) =>
-        w is Container &&
-        w.constraints == const BoxConstraints.tightFor(width: 5, height: 5),
+    (w) => w is Text && RegExp(r'^[+\u2212]\d+$').hasMatch(w.data ?? ''),
   );
+
+  testWidgets('a logged day shows what was left or went over its goal',
+      (tester) async {
+    await tester.pumpWidget(_app(
+      trackedDaysMap: {'2026-08-20': row(20, 1800), '2026-08-21': row(21, 2300)},
+      daysWithEntries: {'2026-08-20', '2026-08-21'},
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('+200'), findsOneWidget);
+    expect(find.text('\u2212300'), findsOneWidget);
+  });
 
   testWidgets('a row kept with no entries gets no marker (#1440)',
       (tester) async {

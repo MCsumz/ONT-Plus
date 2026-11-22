@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:logging/logging.dart';
+import 'package:opennutritracker/core/data/dbo/intake_type_dbo.dart';
+import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/meal_value_unit_text.dart';
 import 'package:opennutritracker/core/presentation/widgets/image_full_screen.dart';
@@ -26,6 +28,7 @@ import 'package:opennutritracker/features/meal_detail/presentation/widgets/meal_
 import 'package:opennutritracker/features/meal_detail/presentation/widgets/meal_placeholder.dart';
 import 'package:opennutritracker/features/meal_detail/presentation/widgets/meal_title_expanded.dart';
 import 'package:opennutritracker/features/meal_detail/presentation/widgets/off_disclaimer.dart';
+import 'package:opennutritracker/features/meal_detail/util/meal_quantity_converter.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
 class MealDetailScreen extends StatefulWidget {
@@ -53,6 +56,11 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   final quantityTextController = TextEditingController();
   late bool _usesImperialUnits;
   LogTray? _logTray;
+
+  /// Set when the screen was opened from an entry already logged: it is
+  /// pre-filled with that entry, and the button saves the change back
+  /// instead of logging the food again.
+  IntakeEntity? _editingIntake;
   bool _showMicronutrients = false;
   // #1126: preloaded from `ConfigEntity.defaultToRawFoodUnits`. False keeps
   // the pre-existing "serving wins whenever one exists" default; true
@@ -148,12 +156,17 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       intakeTypeEntity = args.intakeTypeEntity;
       _usesImperialUnits = args.usesImperialUnits;
       _logTray = args.logTray;
+      _editingIntake = args.editingIntake;
       _argumentsRead = true;
 
       // Thin OFF search results get hydrated to the full product record
       // (serving fields + micronutrients) once, in the background; the
       // listener in build() swaps the displayed meal in when it arrives.
-      _mealDetailBloc.add(HydrateMealEvent(meal));
+      // Not for a logged entry: its totals come from the food as it was
+      // logged, so the screen has to show those same values.
+      if (_editingIntake == null) {
+        _mealDetailBloc.add(HydrateMealEvent(meal));
+      }
     }
 
     _mealDetailBloc.add(LoadDailyTotalsEvent(_day));
@@ -175,6 +188,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     // falls through to weight/volume the same way it always did.
     final preferServing =
         meal.scalableServingQuantity != null && !_defaultToRawFoodUnits;
+
+    final editing = _editingIntake;
+    if (editing != null) {
+      _applyEditingSelection(editing);
+      return;
+    }
 
     _applyingInitialSelection = true;
     try {
@@ -231,6 +250,94 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     } finally {
       _applyingInitialSelection = false;
     }
+  }
+
+  /// Pre-fills the logged entry: its amount, in the unit it was logged in
+  /// when the dropdown offers that unit, otherwise in grams or millilitres.
+  void _applyEditingSelection(IntakeEntity editing) {
+    if (_initialUnit != "") return;
+    _applyingInitialSelection = true;
+    try {
+      final unit = _offeredUnits().contains(editing.unit)
+          ? editing.unit
+          : _baseUnitForMeal();
+      final quantity = convertBaseUnitToQuantity(editing.amount, unit, meal);
+      _initialUnit = unit;
+      _initialQuantity = _formatQuantity(quantity);
+      quantityTextController.text = _initialQuantity;
+      _mealDetailBloc.add(
+        UpdateKcalEvent(
+          meal: meal,
+          totalQuantity: _initialQuantity,
+          selectedUnit: _initialUnit,
+        ),
+      );
+    } finally {
+      _applyingInitialSelection = false;
+    }
+  }
+
+  /// The units the bottom sheet's dropdown lists for [meal]; kept in step
+  /// with `MealDetailBottomSheet`'s item list.
+  Set<String> _offeredUnits() {
+    final neither = !meal.isLiquid && !meal.isSolid;
+    return {
+      if (meal.scalableServingQuantity != null)
+        UnitDropdownItem.serving.toString(),
+      if (meal.isSolid || neither) ...[
+        UnitDropdownItem.g.toString(),
+        UnitDropdownItem.oz.toString(),
+      ],
+      if (meal.isLiquid || neither) ...[
+        UnitDropdownItem.ml.toString(),
+        UnitDropdownItem.flOz.toString(),
+      ],
+      UnitDropdownItem.gml.toString(),
+    };
+  }
+
+  String _baseUnitForMeal() {
+    if (meal.isLiquid) {
+      return _usesImperialUnits
+          ? UnitDropdownItem.flOz.toString()
+          : UnitDropdownItem.ml.toString();
+    }
+    if (meal.isSolid) {
+      return _usesImperialUnits
+          ? UnitDropdownItem.oz.toString()
+          : UnitDropdownItem.g.toString();
+    }
+    return UnitDropdownItem.gml.toString();
+  }
+
+  /// Up to two decimals, as the quantity field accepts, without trailing
+  /// zeros: 100 rather than 100.00, 1.5 rather than 1.50.
+  static String _formatQuantity(double value) {
+    final rounded = (value * 100).round() / 100;
+    if (rounded == rounded.roundToDouble()) {
+      return rounded.toInt().toString();
+    }
+    return rounded.toString();
+  }
+
+  /// Hands the edit back to the screen that opened this one, which stores
+  /// it and adjusts that day's totals. An amount and unit left as they were
+  /// keep the stored amount exactly, rather than one rounded for display.
+  void _onSaveEdit(IntakeTypeEntity type) {
+    final editing = _editingIntake;
+    if (editing == null) return;
+    final state = _mealDetailBloc.state;
+    final unchanged = quantityTextController.text == _initialQuantity &&
+        state.selectedUnit == _initialUnit;
+    Navigator.of(context).pop(
+      LoggedIntakeEdit(
+        amount: unchanged
+            ? editing.amount
+            : double.parse(state.totalQuantityConverted.replaceAll(',', '.')),
+        unit: unchanged ? editing.unit : state.selectedUnit,
+        type: type,
+      ),
+    );
   }
 
   /// Apply the hydrated full product to the screen. If the user hasn't touched
@@ -299,6 +406,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               quantityTextController: quantityTextController,
               onQuantityOrUnitChanged: onQuantityOrUnitChanged,
               logTray: _logTray,
+              editMealType: _editingIntake?.type,
+              onSaveEdit: _editingIntake == null ? null : _onSaveEdit,
             );
           },
           ),
@@ -335,10 +444,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           // DailyKcalOverview bottom bar present it renders underneath that
           // bar instead of in the visible toolbar row.
           title: AnimatedOpacity(
-            opacity: _showAppBarTitle ? 1.0 : 0.0,
+            opacity: _showAppBarTitle || _editingIntake != null ? 1.0 : 0.0,
             duration: const Duration(milliseconds: 200),
             child: Text(
-              meal.name ?? '',
+              _showAppBarTitle || _editingIntake == null
+                  ? meal.name ?? ''
+                  : S.of(context).editLoggedEntryTitle,
               style: Theme.of(context)
                   .textTheme
                   .titleLarge
@@ -349,7 +460,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           bottom: PreferredSize(
             preferredSize: Size.fromHeight(dayKcalGoal > 0 ? 68 : 0),
             child: DailyKcalOverview(
-              dayKcalConsumed: dayKcalConsumed,
+              // The day's total already holds the entry being edited; it is
+              // shown as the live selection instead, not counted twice.
+              dayKcalConsumed: _editingIntake == null
+                  ? dayKcalConsumed
+                  : (dayKcalConsumed - _editingIntake!.totalKcal)
+                      .clamp(0.0, double.infinity),
               dayKcalGoal: dayKcalGoal,
               currentSelectionKcal: totalKcal,
             ),
@@ -370,6 +486,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               meal: meal,
               semanticsIdentifier: 'meal-detail-favourite',
             ),
+            // Editing the food itself would log it anew; not from an entry.
+            if (_editingIntake == null)
             Semantics(
               identifier: 'meal-detail-edit',
               child: IconButton(
@@ -548,6 +666,49 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   }
 }
 
+/// What the detail screen hands back when it edited a logged entry.
+class LoggedIntakeEdit {
+  /// In grams or millilitres, as entries are stored.
+  final double amount;
+  final String unit;
+  final IntakeTypeEntity type;
+
+  const LoggedIntakeEdit({
+    required this.amount,
+    required this.unit,
+    required this.type,
+  });
+
+  Map<String, dynamic> toUpdateFields() => {
+        'amount': amount,
+        'unit': unit,
+        'type': IntakeTypeDBO.fromIntakeTypeEntity(type),
+      };
+}
+
+/// Opens [intake] in the food detail screen to change its amount, unit and
+/// meal. Completes with the change, or null when the user backed out.
+Future<LoggedIntakeEdit?> openLoggedIntakeEditor(
+  BuildContext context,
+  IntakeEntity intake,
+  DateTime day,
+  bool usesImperialUnits,
+) async {
+  // Untyped: the app's `routes` table builds `MaterialPageRoute<dynamic>`,
+  // which a typed pushNamed would fail to cast.
+  final result = await Navigator.of(context).pushNamed(
+    NavigationOptions.mealDetailRoute,
+    arguments: MealDetailScreenArguments(
+      intake.meal,
+      intake.type,
+      day,
+      usesImperialUnits,
+      editingIntake: intake,
+    ),
+  );
+  return result is LoggedIntakeEdit ? result : null;
+}
+
 class MealDetailScreenArguments {
   final MealEntity mealEntity;
   final IntakeTypeEntity intakeTypeEntity;
@@ -558,12 +719,16 @@ class MealDetailScreenArguments {
   /// to it and returns there instead of logging.
   final LogTray? logTray;
 
+  /// A logged entry to edit rather than a food to log.
+  final IntakeEntity? editingIntake;
+
   MealDetailScreenArguments(
     this.mealEntity,
     this.intakeTypeEntity,
     this.day,
     this.usesImperialUnits, {
     this.logTray,
+    this.editingIntake,
   });
 }
 

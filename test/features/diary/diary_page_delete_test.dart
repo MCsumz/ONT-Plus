@@ -46,7 +46,9 @@ import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_b
 import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dart';
 import 'package:opennutritracker/features/diary/presentation/widgets/day_info_widget.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
+import 'package:opennutritracker/features/meal_detail/meal_detail_screen.dart';
 import 'package:opennutritracker/features/meal_detail/presentation/bloc/meal_detail_bloc.dart';
+import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 import 'package:provider/provider.dart';
 
@@ -260,15 +262,20 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider<EnergyUnitProvider>(
         create: (_) => EnergyUnitProvider(),
-        child: const MaterialApp(
-          localizationsDelegates: [
+        child: MaterialApp(
+          // A logged entry opens the food detail screen to edit it; this
+          // stand-in hands back an edit so the Diary's saving is what runs.
+          routes: {
+            NavigationOptions.mealDetailRoute: (_) => const _StubEntryEditor(),
+          },
+          localizationsDelegates: const [
             S.delegate,
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: S.supportedLocales,
-          home: Scaffold(body: DiaryPage()),
+          home: const Scaffold(body: DiaryPage()),
         ),
       ),
     );
@@ -288,9 +295,8 @@ void main() {
 
   Future<void> deleteToast(WidgetTester tester) async {
     await tester.ensureVisible(find.text('Toast'));
-    await tester.longPress(find.text('Toast'));
-    await settle(tester);
-    await tester.tap(find.text(l10nEn.dialogDeleteLabel.toUpperCase()));
+    // Swiping the row left asks to confirm the delete.
+    await tester.drag(find.text('Toast'), const Offset(-500, 0));
     await settle(tester);
     await tester.tap(find.text(l10nEn.dialogOKLabel));
     await settle(tester);
@@ -368,9 +374,8 @@ void main() {
 
       await tester.tap(find.text('Toast'));
       await settle(tester);
-      await tester.enterText(find.byType(TextFormField), '50');
       await passMidnight(tester);
-      await tester.tap(find.text(l10nEn.dialogOKLabel));
+      await tester.tap(find.byKey(_StubEntryEditor.saveKey));
       await settle(tester);
 
       expect(intakeBox.values.single.amount, 50);
@@ -383,7 +388,7 @@ void main() {
     ) async {
       await openToday(tester);
 
-      await tester.longPress(find.text('Toast'));
+      await tester.drag(find.text('Toast'), const Offset(-500, 0));
       await settle(tester);
       await passMidnight(tester);
       await tester.tap(find.text(l10nEn.dialogOKLabel));
@@ -411,4 +416,28 @@ void main() {
       expect(rowOf(tomorrow), isNull);
     });
   });
+}
+
+/// Stands in for the food detail screen opened on a logged entry: saving
+/// halves it to 50 g, in its own unit and meal.
+class _StubEntryEditor extends StatelessWidget {
+  static const saveKey = Key('stub-entry-editor-save');
+
+  const _StubEntryEditor();
+
+  @override
+  Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)!.settings.arguments
+        as MealDetailScreenArguments;
+    final entry = args.editingIntake!;
+    return Scaffold(
+      body: TextButton(
+        key: saveKey,
+        onPressed: () => Navigator.of(context).pop(
+          LoggedIntakeEdit(amount: 50, unit: entry.unit, type: entry.type),
+        ),
+        child: const Text('save'),
+      ),
+    );
+  }
 }

@@ -158,10 +158,8 @@ void main() {
       onDeleteIntake: (intake, _) => deleted.add(intake),
     );
 
-    // A past day, so the long-press asks copy-or-delete before confirming.
-    await tester.longPress(find.text('Hidden Porridge'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10nEn.dialogDeleteLabel.toUpperCase()));
+    // Swiping the row left asks to confirm the delete.
+    await tester.drag(find.text('Hidden Porridge'), const Offset(-500, 0));
     await tester.pumpAndSettle();
     expect(find.text(l10nEn.deleteTimeDialogTitle), findsOneWidget);
     await tester.tap(find.text(l10nEn.dialogOKLabel));
@@ -182,7 +180,7 @@ void main() {
   // yesterday's date. Copying goes to that day, so it must not be offered
   // there, whatever DateTime.now() says.
   group('on the Diary\'s today', () {
-    testWidgets('a long-press asks to delete, without offering a copy', (
+    testWidgets('a swipe deletes on that day, and the entry offers no copy', (
       WidgetTester tester,
     ) async {
       final deleted = <DateTime>[];
@@ -195,15 +193,41 @@ void main() {
         onCopyIntake: copied.add,
       );
 
-      await tester.longPress(find.text('Dinner Stew'));
+      await tester.tap(find.bySemanticsIdentifier('intake-item-menu'));
       await tester.pumpAndSettle();
-      expect(find.text(l10nEn.dialogCopyLabel.toUpperCase()), findsNothing);
+      expect(find.text(l10nEn.dialogCopyLabel), findsNothing);
+      expect(find.text(l10nEn.moveToMealLabel), findsOneWidget);
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
+
+      await tester.drag(find.text('Dinner Stew'), const Offset(-500, 0));
+      await tester.pumpAndSettle();
       expect(find.text(l10nEn.deleteTimeDialogTitle), findsOneWidget);
       await tester.tap(find.text(l10nEn.dialogOKLabel));
       await tester.pumpAndSettle();
 
       expect(deleted, [DateTime(2026, 6, 15)]);
       expect(copied, isEmpty);
+    });
+
+    testWidgets('a swipe that is cancelled keeps the entry', (
+      WidgetTester tester,
+    ) async {
+      final deleted = <DateTime>[];
+      await _pumpOmadDay(
+        tester,
+        breakfastIntake: const [],
+        currentDay: DateTime(2026, 6, 15),
+        onDeleteIntake: (_, day) => deleted.add(day),
+      );
+
+      await tester.drag(find.text('Dinner Stew'), const Offset(-500, 0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10nEn.dialogCancelLabel));
+      await tester.pumpAndSettle();
+
+      expect(deleted, isEmpty);
+      expect(find.text('Dinner Stew'), findsOneWidget);
     });
 
     testWidgets('the section menu has no Copy', (WidgetTester tester) async {
@@ -217,6 +241,16 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(l10nEn.dialogCopyLabel), findsNothing);
     });
+  });
+
+  testWidgets('a past day\'s entry menu offers Copy', (
+    WidgetTester tester,
+  ) async {
+    await _pumpOmadDay(tester, breakfastIntake: const []);
+
+    await tester.tap(find.bySemanticsIdentifier('intake-item-menu'));
+    await tester.pumpAndSettle();
+    expect(find.text(l10nEn.dialogCopyLabel), findsOneWidget);
   });
 
   testWidgets('a past day\'s section menu offers Copy', (

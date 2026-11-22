@@ -7,13 +7,13 @@ import 'package:opennutritracker/core/domain/entity/user_activity_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/activity_vertial_list.dart';
 import 'package:opennutritracker/core/presentation/widgets/copy_or_delete_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/macro_nutriments_widget.dart';
-import 'package:opennutritracker/core/presentation/widgets/copy_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
 import 'package:opennutritracker/core/presentation/widgets/empty_hint.dart';
 import 'package:opennutritracker/core/presentation/widgets/delete_dialog.dart';
 import 'package:opennutritracker/core/styles/dimens.dart';
 import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
 import 'package:opennutritracker/core/utils/custom_icons.dart';
+import 'package:opennutritracker/core/utils/energy_display.dart';
 import 'package:opennutritracker/core/utils/energy_unit_provider.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
@@ -245,6 +245,8 @@ class _DayInfoWidgetState extends State<DayInfoWidget> {
                               ),
                             ),
                           ),
+                          const SizedBox(height: Dimens.spacing12),
+                          _buildNetKcal(context, trackedDay),
                           const SizedBox(height: Dimens.spacing16),
                           MacroNutrientsView(
                             totalCarbsIntake: _allIntakes
@@ -308,7 +310,6 @@ class _DayInfoWidgetState extends State<DayInfoWidget> {
                 intakeList: _sortByMeal[IntakeTypeEntity.breakfast]!
                     .apply(widget.breakfastIntake),
                 onDeleteIntakeCallback: _deleteIntakeOnShownDay,
-                onItemLongPressedCallback: onIntakeItemLongPressed,
                 onItemTappedCallback: widget.onEditIntake,
                 onCopyIntakeCallback:
                     _showsCurrentDay
@@ -334,7 +335,6 @@ class _DayInfoWidgetState extends State<DayInfoWidget> {
                 intakeList: _sortByMeal[IntakeTypeEntity.lunch]!
                     .apply(widget.lunchIntake),
                 onDeleteIntakeCallback: _deleteIntakeOnShownDay,
-                onItemLongPressedCallback: onIntakeItemLongPressed,
                 onItemTappedCallback: widget.onEditIntake,
                 usesImperialUnits: widget.usesImperialUnits,
                 showMealMacros: widget.showMealMacros,
@@ -360,7 +360,6 @@ class _DayInfoWidgetState extends State<DayInfoWidget> {
                 intakeList: _sortByMeal[IntakeTypeEntity.dinner]!
                     .apply(widget.dinnerIntake),
                 onDeleteIntakeCallback: _deleteIntakeOnShownDay,
-                onItemLongPressedCallback: onIntakeItemLongPressed,
                 onItemTappedCallback: widget.onEditIntake,
                 onCopyIntakeCallback:
                     _showsCurrentDay
@@ -385,7 +384,6 @@ class _DayInfoWidgetState extends State<DayInfoWidget> {
                 intakeList: _sortByMeal[IntakeTypeEntity.snack]!
                     .apply(widget.snackIntake),
                 onDeleteIntakeCallback: _deleteIntakeOnShownDay,
-                onItemLongPressedCallback: onIntakeItemLongPressed,
                 onItemTappedCallback: widget.onEditIntake,
                 usesImperialUnits: widget.usesImperialUnits,
                 showMealMacros: widget.showMealMacros,
@@ -430,6 +428,50 @@ class _DayInfoWidgetState extends State<DayInfoWidget> {
     return '$displayActual/$displayGoal $unit';
   }
 
+  /// The day's net balance: what is still left under the goal (+) or how
+  /// far it went over (−). The stored goal already includes the energy
+  /// burned by that day's activities, so goal − eaten is the net value.
+  Widget _buildNetKcal(BuildContext context, TrackedDayEntity trackedDay) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final eaten = _allIntakes.fold(0.0, (sum, i) => sum + i.totalKcal);
+    final burned =
+        widget.userActivities.fold(0.0, (sum, a) => sum + a.burnedKcal);
+    final net = trackedDay.calorieGoal - eaten;
+    final isOver = EnergyDisplay.displayValue(context, net) < 0;
+    final netText = '${isOver ? '\u2212' : '+'}'
+        '${EnergyDisplay.formatWithUnit(context, net.abs())}';
+    return Semantics(
+      identifier: 'diary-day-net-kcal',
+      container: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isOver
+                ? S.of(context).diaryNetKcalOver(netText)
+                : S.of(context).diaryNetKcalLeft(netText),
+            style: textTheme.titleMedium?.copyWith(
+              color: isOver ? colorScheme.error : colorScheme.primary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: Dimens.spacing4),
+          Text(
+            S.of(context).diaryNetKcalBreakdown(
+                  EnergyDisplay.formatValue(context, eaten),
+                  EnergyDisplay.formatValue(context, burned),
+                  EnergyDisplay.formatWithUnit(context, trackedDay.calorieGoal),
+                ),
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   bool get _showsCurrentDay =>
       DateUtils.isSameDay(widget.selectedDay, widget.currentDay);
 
@@ -438,70 +480,6 @@ class _DayInfoWidgetState extends State<DayInfoWidget> {
   Function(IntakeEntity, TrackedDayEntity?) get _deleteIntakeOnShownDay {
     final day = widget.selectedDay;
     return (intake, _) => widget.onDeleteIntake(intake, day);
-  }
-
-  void showCopyOrDeleteIntakeDialog(
-    BuildContext context,
-    IntakeEntity intakeEntity,
-    DateTime day,
-  ) async {
-    final copyOrDelete = await showDialog<bool>(
-      context: context,
-      builder: (context) => const CopyOrDeleteDialog(),
-    );
-    if (context.mounted) {
-      if (copyOrDelete != null && !copyOrDelete) {
-        showDeleteIntakeDialog(context, intakeEntity, day);
-      } else if (copyOrDelete != null && copyOrDelete) {
-        showCopyDialog(context, intakeEntity);
-      }
-    }
-  }
-
-  void showCopyDialog(BuildContext context, IntakeEntity intakeEntity) async {
-    final defaultMealType = switch (intakeEntity.type) {
-      IntakeTypeEntity.breakfast => AddMealType.breakfastType,
-      IntakeTypeEntity.lunch => AddMealType.lunchType,
-      IntakeTypeEntity.dinner => AddMealType.dinnerType,
-      IntakeTypeEntity.snack => AddMealType.snackType,
-    };
-
-    final copyDialog = CopyDialog(
-      initialValue: defaultMealType,
-    );
-    final selectedMealType = await showDialog<AddMealType>(
-      context: context,
-      builder: (context) => copyDialog,
-    );
-    if (selectedMealType != null) {
-      widget.onCopyIntake(intakeEntity, null, selectedMealType);
-    }
-  }
-
-  void showDeleteIntakeDialog(
-    BuildContext context,
-    IntakeEntity intakeEntity,
-    DateTime day,
-  ) async {
-    final shouldDeleteIntake = await showDialog<bool>(
-      context: context,
-      builder: (context) => const DeleteDialog(),
-    );
-    if (shouldDeleteIntake != null) {
-      widget.onDeleteIntake(intakeEntity, day);
-    }
-  }
-
-  void onIntakeItemLongPressed(
-    BuildContext context,
-    IntakeEntity intakeEntity,
-  ) async {
-    final day = widget.selectedDay;
-    if (DateUtils.isSameDay(day, widget.currentDay)) {
-      showDeleteIntakeDialog(context, intakeEntity, day);
-    } else {
-      showCopyOrDeleteIntakeDialog(context, intakeEntity, day);
-    }
   }
 
   void onActivityItemLongPressed(

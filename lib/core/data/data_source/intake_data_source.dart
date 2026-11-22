@@ -94,6 +94,11 @@ class IntakeDataSource {
     }
     for (final copy in copies) {
       copy.value.amount = fields['amount'] ?? copy.value.amount;
+      // Moving an entry between meals changes only its section: the day and
+      // its totals stay the same, so no tracked-day row needs touching.
+      copy.value.type = fields['type'] ?? copy.value.type;
+      // An edit from the detail screen can re-pick the unit with the amount.
+      copy.value.unit = fields['unit'] ?? copy.value.unit;
     }
     await _intakeBox.putAll({for (final copy in copies) copy.key: copy.value});
     return _intakeBox.get(copies.first.key);

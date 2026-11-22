@@ -5,7 +5,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:opennutritracker/core/data/data_source/recipe_data_source.dart';
+import 'package:opennutritracker/core/data/dbo/intake_type_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/recipe_dbo.dart';
+import 'package:opennutritracker/core/data/repository/intake_repository.dart';
+import 'package:opennutritracker/core/domain/usecase/move_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/entity/recipe_entity.dart';
 import 'package:opennutritracker/core/domain/entity/recipe_ingredient_entity.dart';
 import 'package:opennutritracker/core/data/repository/recipe_repository.dart';
@@ -52,6 +55,19 @@ class _FakeMealDetailBloc extends Fake implements MealDetailBloc {
     await _addGate?.future;
     _dropLog.add('add');
   });
+}
+
+/// Stores a move like the real repository; the usecase holds the lock.
+class _FakeIntakeRepository extends Fake implements IntakeRepository {
+  @override
+  Future<IntakeEntity?> updateIntake(
+    String intakeId,
+    Map<String, dynamic> fields,
+  ) async {
+    await _addGate?.future;
+    _dropLog.add('move to ${(fields['type'] as IntakeTypeDBO).name}');
+    return null;
+  }
 }
 
 class _FakeHomeBloc extends Fake implements HomeBloc {
@@ -163,6 +179,9 @@ void main() {
     );
     locator.registerFactory<MealDetailBloc>(_FakeMealDetailBloc.new);
     locator.registerFactory<HomeBloc>(_FakeHomeBloc.new);
+    locator.registerSingleton<MoveIntakeUsecase>(
+      MoveIntakeUsecase(_FakeIntakeRepository()),
+    );
     locator.registerFactory<DiaryBloc>(_FakeDiaryBloc.new);
     locator.registerFactory<CalendarDayBloc>(_FakeCalendarDayBloc.new);
     locator.registerFactory<GetProfilesUsecase>(
@@ -531,8 +550,8 @@ void main() {
     },
   );
 
-  testWidgets('a profile switch queued during a drag between meals waits '
-      'for the delete', (WidgetTester tester) async {
+  testWidgets('a drop moves the entry in place, and a profile switch queued '
+      'during it waits for it', (WidgetTester tester) async {
     await tester.pumpWidget(
       _wrapWithMaterial(
         IntakeVerticalList(
@@ -553,6 +572,7 @@ void main() {
     final target = tester.widget<DragTarget<IntakeEntity>>(
       find.byType(DragTarget<IntakeEntity>),
     );
+    // A breakfast entry dropped on Lunch.
     target.onAcceptWithDetails!(
       DragTargetDetails(data: intakes.single, offset: Offset.zero),
     );
@@ -564,6 +584,33 @@ void main() {
     await switched;
     await tester.pump();
 
-    expect(_dropLog, ['add', 'delete', 'switch']);
+    // One write that changes only the meal: no re-add, and no delete that
+    // could debit another day's totals.
+    expect(_dropLog, ['move to lunch', 'switch']);
+  });
+
+  testWidgets('an entry is not dropped on its own meal', (tester) async {
+    await tester.pumpWidget(
+      _wrapWithMaterial(
+        IntakeVerticalList(
+          day: DateTime(2026, 1, 1),
+          title: 'Breakfast',
+          listIcon: Icons.bakery_dining_outlined,
+          addMealType: AddMealType.breakfastType,
+          intakeList: const [],
+          usesImperialUnits: false,
+          onDeleteIntakeCallback: (_, _) {},
+        ),
+      ),
+    );
+    final target = tester.widget<DragTarget<IntakeEntity>>(
+      find.byType(DragTarget<IntakeEntity>),
+    );
+    expect(
+      target.onWillAcceptWithDetails!(
+        DragTargetDetails(data: intakes.single, offset: Offset.zero),
+      ),
+      isFalse,
+    );
   });
 }

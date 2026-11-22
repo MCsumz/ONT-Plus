@@ -15,7 +15,6 @@ import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
 import 'package:opennutritracker/core/domain/entity/user_activity_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/activity_vertial_list.dart';
 import 'package:opennutritracker/core/presentation/widgets/edit_activity_dialog.dart';
-import 'package:opennutritracker/core/presentation/widgets/edit_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/delete_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/disclaimer_dialog.dart';
 import 'package:opennutritracker/core/domain/usecase/import_workouts_usecase.dart';
@@ -30,6 +29,7 @@ import 'package:opennutritracker/features/home/presentation/widgets/fasting_home
 import 'package:opennutritracker/features/home/presentation/widgets/quick_water_widget.dart';
 import 'package:opennutritracker/core/domain/entity/body_weight_unit_entity.dart';
 import 'package:opennutritracker/features/home/presentation/widgets/quick_weight_widget.dart';
+import 'package:opennutritracker/features/meal_detail/meal_detail_screen.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
 class HomePage extends StatefulWidget {
@@ -43,9 +43,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final log = Logger('HomePage');
 
   late HomeBloc _homeBloc;
-  bool _isIntakeDragging = false;
   bool _isActivityDragging = false;
-  bool get _isDragging => _isIntakeDragging || _isActivityDragging;
 
   @override
   void initState() {
@@ -260,7 +258,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 addMealType: AddMealType.breakfastType,
                 intakeList: breakfastIntakeList,
                 onDeleteIntakeCallback: onDeleteIntake,
-                onItemDragCallback: onIntakeItemDrag,
                 onItemTappedCallback: onIntakeItemTapped,
                 usesImperialUnits: usesImperialUnits,
                 showMealMacros: showMealMacros,
@@ -277,7 +274,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 addMealType: AddMealType.lunchType,
                 intakeList: lunchIntakeList,
                 onDeleteIntakeCallback: onDeleteIntake,
-                onItemDragCallback: onIntakeItemDrag,
                 onItemTappedCallback: onIntakeItemTapped,
                 usesImperialUnits: usesImperialUnits,
                 showMealMacros: showMealMacros,
@@ -294,7 +290,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 listIcon: IntakeTypeEntity.dinner.getIconData(),
                 intakeList: dinnerIntakeList,
                 onDeleteIntakeCallback: onDeleteIntake,
-                onItemDragCallback: onIntakeItemDrag,
                 onItemTappedCallback: onIntakeItemTapped,
                 usesImperialUnits: usesImperialUnits,
                 showMealMacros: showMealMacros,
@@ -311,7 +306,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 addMealType: AddMealType.snackType,
                 intakeList: snackIntakeList,
                 onDeleteIntakeCallback: onDeleteIntake,
-                onItemDragCallback: onIntakeItemDrag,
                 onItemTappedCallback: onIntakeItemTapped,
                 usesImperialUnits: usesImperialUnits,
                 showMealMacros: showMealMacros,
@@ -323,56 +317,41 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         Align(
           alignment: Alignment.bottomCenter,
           child: Visibility(
-            visible: _isDragging,
+            visible: _isActivityDragging,
             child: SizedBox(
               height: 70,
-              child: Stack(
-                children: [
-                  DragTarget<IntakeEntity>(
-                    onAcceptWithDetails: (data) {
-                      _confirmDelete(context, data.data);
-                    },
-                    onLeave: (data) {
-                      setState(() {
-                        _isIntakeDragging = false;
-                      });
-                    },
-                    builder: (context, candidateData, rejectedData) {
-                      return Container(
-                        margin: const EdgeInsets.fromLTRB(
-                          Dimens.spacing16,
-                          0,
-                          Dimens.spacing16,
-                          Dimens.spacing12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.error,
-                          borderRadius: Dimens.borderRadiusL,
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.delete_rounded,
-                            size: 32,
-                            color: Theme.of(context).colorScheme.onError,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  DragTarget<UserActivityEntity>(
-                    onAcceptWithDetails: (data) {
-                      _confirmDeleteActivity(context, data.data);
-                    },
-                    onLeave: (data) {
-                      setState(() {
-                        _isActivityDragging = false;
-                      });
-                    },
-                    builder: (context, candidateData, rejectedData) {
-                      return const SizedBox.expand();
-                    },
-                  ),
-                ],
+              // Food entries are deleted by swiping left; only activities
+              // still drop here to be deleted.
+              child: DragTarget<UserActivityEntity>(
+                onAcceptWithDetails: (data) {
+                  _confirmDeleteActivity(context, data.data);
+                },
+                onLeave: (data) {
+                  setState(() {
+                    _isActivityDragging = false;
+                  });
+                },
+                builder: (context, candidateData, rejectedData) {
+                  return Container(
+                    margin: const EdgeInsets.fromLTRB(
+                      Dimens.spacing16,
+                      0,
+                      Dimens.spacing16,
+                      Dimens.spacing12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.error,
+                      borderRadius: Dimens.borderRadiusL,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.delete_rounded,
+                        size: 32,
+                        color: Theme.of(context).colorScheme.onError,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -423,14 +402,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
-  void onIntakeItemDrag(bool isDragging) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        _isIntakeDragging = isDragging;
-      });
-    });
-  }
-
   void onActivityItemDrag(bool isDragging) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
@@ -463,17 +434,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     IntakeEntity intakeEntity,
     bool usesImperialUnits,
   ) async {
-    final changeIntakeAmount = await showDialog<double>(
-      context: context,
-      builder: (context) => EditDialog(
-        intakeEntity: intakeEntity,
-        usesImperialUnits: usesImperialUnits,
-      ),
+    // The full food screen, pre-filled with the entry: amount, unit and
+    // meal can all change, with the nutrients updating as they do.
+    final edit = await openLoggedIntakeEditor(
+      context,
+      intakeEntity,
+      DateTime.now(),
+      usesImperialUnits,
     );
-    if (changeIntakeAmount != null) {
-      await _homeBloc.updateIntakeItem(intakeEntity.id, {
-        'amount': changeIntakeAmount,
-      });
+    if (edit != null) {
+      await _homeBloc.updateIntakeItem(intakeEntity.id, edit.toUpdateFields());
       _homeBloc.add(const LoadItemsEvent());
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -489,20 +459,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   ) async {
     await _homeBloc.deleteIntakeItem(intake);
     _homeBloc.add(const LoadItemsEvent());
-  }
-
-  void _confirmDelete(BuildContext context, IntakeEntity intake) async {
-    bool? delete = await showDialog<bool>(
-      context: context,
-      builder: (context) => const DeleteDialog(),
-    );
-
-    if (delete == true) {
-      onDeleteIntake(intake, null);
-    }
-    setState(() {
-      _isIntakeDragging = false;
-    });
   }
 
   void _confirmDeleteActivity(

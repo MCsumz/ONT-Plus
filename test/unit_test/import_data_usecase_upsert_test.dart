@@ -18,6 +18,7 @@ import 'package:opennutritracker/core/data/data_source/user_activity_data_source
 import 'package:opennutritracker/core/data/data_source/user_activity_dbo.dart';
 import 'package:opennutritracker/core/data/data_source/weight_log_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/intake_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/intake_type_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/recipe_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/tracked_day_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/weight_log_dbo.dart';
@@ -411,6 +412,32 @@ void main() {
         [80, 80],
       );
       expect(intakeBox.values.singleWhere((i) => i.id == 'meal-b').amount, 100);
+    });
+
+    test('intake moved to another meal keeps its amount and day', () async {
+      await intakeBox.addAll([
+        IntakeDBO.fromJson(_intakeJson('meal-a', amount: 50)),
+        IntakeDBO.fromJson(_intakeJson('meal-b')),
+        IntakeDBO.fromJson(_intakeJson('meal-a', amount: 50)),
+      ]);
+      final dayBefore = intakeBox.values.first.dateTime;
+
+      final moved = await IntakeDataSource(
+        provider,
+      ).updateIntake('meal-a', {'type': IntakeTypeDBO.dinner});
+
+      expect(moved?.type, IntakeTypeDBO.dinner);
+      final copies = intakeBox.values.where((i) => i.id == 'meal-a');
+      expect(copies.map((i) => i.type), [
+        IntakeTypeDBO.dinner,
+        IntakeTypeDBO.dinner,
+      ]);
+      expect(copies.map((i) => i.amount), [50, 50]);
+      expect(copies.map((i) => i.dateTime), [dayBefore, dayBefore]);
+      expect(
+        intakeBox.values.singleWhere((i) => i.id == 'meal-b').type,
+        IntakeTypeDBO.breakfast,
+      );
     });
 
     test('activity, based on the last copy the old edit left', () async {

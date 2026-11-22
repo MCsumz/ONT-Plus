@@ -26,6 +26,8 @@ class IntakeCard extends StatelessWidget {
   final Function(BuildContext, IntakeEntity)? onItemLongPressed;
   final Function(BuildContext, IntakeEntity, bool)? onItemTapped;
   final VoidCallback? onShare;
+  final VoidCallback? onMove;
+  final VoidCallback? onCopy;
   final bool firstListElement;
   final bool usesImperialUnits;
   final DiarySortType? sortType;
@@ -36,6 +38,8 @@ class IntakeCard extends StatelessWidget {
     this.onItemLongPressed,
     this.onItemTapped,
     this.onShare,
+    this.onMove,
+    this.onCopy,
     required this.firstListElement,
     required this.usesImperialUnits,
     this.sortType,
@@ -139,7 +143,7 @@ class IntakeCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (onShare != null)
+                if (onShare != null || onMove != null || onCopy != null)
                   Semantics(
                     identifier: 'intake-item-menu',
                     container: true,
@@ -150,13 +154,30 @@ class IntakeCard extends StatelessWidget {
                       ),
                       shape: Dimens.shapeM,
                       itemBuilder: (_) => [
-                        PopupMenuItem<void>(
-                          onTap: onShare,
-                          child: Semantics(
-                            identifier: 'intake-share-food',
-                            child: Text(s.shareFoodLabel),
+                        if (onMove != null)
+                          PopupMenuItem<void>(
+                            onTap: onMove,
+                            child: Semantics(
+                              identifier: 'intake-move-food',
+                              child: Text(s.moveToMealLabel),
+                            ),
                           ),
-                        ),
+                        if (onCopy != null)
+                          PopupMenuItem<void>(
+                            onTap: onCopy,
+                            child: Semantics(
+                              identifier: 'intake-copy-food',
+                              child: Text(s.dialogCopyLabel),
+                            ),
+                          ),
+                        if (onShare != null)
+                          PopupMenuItem<void>(
+                            onTap: onShare,
+                            child: Semantics(
+                              identifier: 'intake-share-food',
+                              child: Text(s.shareFoodLabel),
+                            ),
+                          ),
                       ],
                     ),
                   ),

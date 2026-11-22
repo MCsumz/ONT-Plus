@@ -5,7 +5,11 @@ import 'package:opennutritracker/generated/l10n.dart';
 class CopyDialog extends StatefulWidget {
   final AddMealType initialValue;
 
-  const CopyDialog({super.key, required this.initialValue});
+  /// Overrides the default "copy to" question, so the same meal picker
+  /// serves moving an entry too.
+  final String? title;
+
+  const CopyDialog({super.key, required this.initialValue, this.title});
   @override
   State<StatefulWidget> createState() {
     return CopyDialogState();
@@ -26,7 +30,7 @@ class CopyDialogState extends State<CopyDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(S.of(context).copyDialogTitle),
+      title: Text(widget.title ?? S.of(context).copyDialogTitle),
       content: DropdownButton<AddMealType>(
         value: _selectedValue,
         itemHeight: null,

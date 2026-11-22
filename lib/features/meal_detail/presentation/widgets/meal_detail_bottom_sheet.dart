@@ -41,6 +41,13 @@ class MealDetailBottomSheet extends StatefulWidget {
   /// instead (#1520). Once the list has items, the main button adds to it.
   final LogTray? logTray;
 
+  /// The meal of the logged entry being edited; null when logging a food.
+  final IntakeTypeEntity? editMealType;
+
+  /// Saves an edit of a logged entry with the meal picked on the sheet.
+  /// When set, the main button saves instead of logging.
+  final void Function(IntakeTypeEntity type)? onSaveEdit;
+
   const MealDetailBottomSheet({
     super.key,
     required this.product,
@@ -52,6 +59,8 @@ class MealDetailBottomSheet extends StatefulWidget {
     required this.selectedUnit,
     this.usesImperialUnits = false,
     this.logTray,
+    this.editMealType,
+    this.onSaveEdit,
   });
 
   @override
@@ -66,6 +75,12 @@ class _MealDetailBottomSheetState extends State<MealDetailBottomSheet> {
   /// a second tap would pass the duplicate check again and log the meal
   /// twice.
   bool _submitting = false;
+
+  /// The meal an edited entry is saved under.
+  late IntakeTypeEntity _editMealType =
+      widget.editMealType ?? widget.intakeTypeEntity;
+
+  bool get _isEditing => widget.onSaveEdit != null;
 
   @override
   void initState() {
@@ -280,6 +295,7 @@ class _MealDetailBottomSheetState extends State<MealDetailBottomSheet> {
                             ),
                           ),
                         ),
+                      if (_isEditing) _buildMealPicker(context),
                       const SizedBox(height: Dimens.spacing16),
                       Semantics(
                         identifier: 'meal-detail-add',
@@ -300,16 +316,22 @@ class _MealDetailBottomSheetState extends State<MealDetailBottomSheet> {
                                 borderRadius: Dimens.borderRadiusM,
                               ),
                             ),
-                            icon: const Icon(Icons.add_rounded),
+                            icon: Icon(
+                              _isEditing
+                                  ? Icons.check_rounded
+                                  : Icons.add_rounded,
+                            ),
                             label: Text(
-                              addsToList
+                              _isEditing
+                                  ? S.of(context).saveChangesLabel
+                                  : addsToList
                                   ? S.of(context).addToListLabel
                                   : S.of(context).addLabel,
                             ),
                           ),
                         ),
                       ),
-                      if (logTray != null && !addsToList)
+                      if (logTray != null && !addsToList && !_isEditing)
                         Padding(
                           padding: const EdgeInsets.only(top: Dimens.spacing8),
                           child: Semantics(
@@ -355,6 +377,48 @@ class _MealDetailBottomSheetState extends State<MealDetailBottomSheet> {
           ),
         );
       },
+    );
+  }
+
+  /// Breakfast / Lunch / Dinner / Snack, to move the edited entry along
+  /// with its new amount.
+  Widget _buildMealPicker(BuildContext context) {
+    final s = S.of(context);
+    final labels = {
+      IntakeTypeEntity.breakfast: s.breakfastLabel,
+      IntakeTypeEntity.lunch: s.lunchLabel,
+      IntakeTypeEntity.dinner: s.dinnerLabel,
+      IntakeTypeEntity.snack: s.snackLabel,
+    };
+    return Padding(
+      padding: const EdgeInsets.only(top: Dimens.spacing12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            s.editLoggedEntryMealLabel,
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+          const SizedBox(height: Dimens.spacing8),
+          Semantics(
+            identifier: 'meal-detail-edit-meal',
+            child: Wrap(
+              spacing: Dimens.spacing8,
+              runSpacing: Dimens.spacing4,
+              children: [
+                for (final type in IntakeTypeEntity.values)
+                  ChoiceChip(
+                    avatar: Icon(type.getIconData(), size: 18),
+                    label: Text(labels[type]!),
+                    selected: _editMealType == type,
+                    showCheckmark: false,
+                    onSelected: (_) => setState(() => _editMealType = type),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -420,6 +484,14 @@ class _MealDetailBottomSheetState extends State<MealDetailBottomSheet> {
           ),
         ),
       );
+      return;
+    }
+
+    // An edit stores the change on the entry it came from: no duplicate
+    // check (the entry itself would match) and never onto the list.
+    final onSaveEdit = widget.onSaveEdit;
+    if (onSaveEdit != null) {
+      onSaveEdit(_editMealType);
       return;
     }
 
