@@ -1520,7 +1520,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         applicationVersion: packageInfo.version,
-        applicationLegalese: S.of(context).appLicenseLabel,
+        applicationLegalese:
+            '${S.of(context).appLicenseLabel}\n'
+            '${S.of(context).plusCreditLine(AppConst.plusAuthorName)} '
+            '(${AppConst.plusAuthorHandle})\n'
+            '${S.of(context).basedOnUpstreamLine}',
         children: [
           TextButton(
             onPressed: () {
@@ -1531,6 +1535,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const Icon(Icons.code_outlined),
                 const SizedBox(width: 8.0),
                 Text(S.of(context).settingsSourceCodeLabel),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => openUrlOrShowError(
+              context,
+              AppConst.upstreamSourceCodeUrl,
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.call_split_rounded),
+                const SizedBox(width: 8.0),
+                Flexible(child: Text(S.of(context).upstreamProjectLabel)),
               ],
             ),
           ),

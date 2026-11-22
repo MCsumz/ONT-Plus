@@ -59,17 +59,24 @@ class CalendarDayLoaded extends CalendarDayState {
     this.diarySortPreferences,
   });
 
+  // Every field, so a reload without a spinner in between still rebuilds
+  // for any change (a meal moved, a goal changed).
   @override
   List<Object?> get props => [
-        trackedDayEntity,
-        breakfastKcalTarget,
-        lunchKcalTarget,
-        dinnerKcalTarget,
-        snackKcalTarget,
-        breakfastSharePct,
-        lunchSharePct,
-        dinnerSharePct,
-        snackSharePct,
-        diarySortPreferences,
-      ];
+    trackedDayEntity,
+    userActivityList,
+    breakfastIntakeList,
+    lunchIntakeList,
+    dinnerIntakeList,
+    snackIntakeList,
+    breakfastKcalTarget,
+    lunchKcalTarget,
+    dinnerKcalTarget,
+    snackKcalTarget,
+    breakfastSharePct,
+    lunchSharePct,
+    dinnerSharePct,
+    snackSharePct,
+    diarySortPreferences,
+  ];
 }

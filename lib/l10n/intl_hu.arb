@@ -125,7 +125,7 @@
   "alphaVersionName": "[Alfa]",
   "appDescription": "Az OpenNutriTracker egy ingyenes, nyílt forráskódú kalória- és tápanyag-nyomkövető alkalmazás, amely tiszteletben tartja a felhasználók magánéletét.",
   "appLicenseLabel": "GPL-3.0 licenc",
-  "appTitle": "OpenNutriTracker",
+  "appTitle": "ONT+",
   "appVersionName": "{versionNumber} verzió",
   "@appVersionName": {
     "placeholders": {

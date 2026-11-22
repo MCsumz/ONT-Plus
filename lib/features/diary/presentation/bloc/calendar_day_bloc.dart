@@ -51,7 +51,9 @@ class CalendarDayBloc extends Bloc<CalendarDayEvent, CalendarDayState> {
     this._addConfigUsecase,
   ) : super(CalendarDayInitial()) {
     on<LoadCalendarDayEvent>((event, emit) async {
-      emit(CalendarDayLoading());
+      // Another day replaces the shown one when it is ready, without a
+      // spinner flashing in between.
+      if (state is! CalendarDayLoaded) emit(CalendarDayLoading());
       final day = _dateLabel(event.day);
       _currentDay = day;
       await _loadCalendarDay(day, emit);
@@ -59,7 +61,7 @@ class CalendarDayBloc extends Bloc<CalendarDayEvent, CalendarDayState> {
 
     on<RefreshCalendarDayEvent>((event, emit) async {
       if (_currentDay != null) {
-        emit(CalendarDayLoading());
+        if (state is! CalendarDayLoaded) emit(CalendarDayLoading());
         await _loadCalendarDay(_currentDay!, emit);
       }
     });

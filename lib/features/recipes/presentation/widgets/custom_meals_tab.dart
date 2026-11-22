@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:opennutritracker/core/utils/image_decode_size.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
 import 'package:opennutritracker/core/styles/app_palette.dart';
@@ -386,7 +387,13 @@ class _MealLeadingThumbnail extends StatelessWidget {
         if (!file.existsSync()) return fallback;
         return ClipRRect(
           borderRadius: Dimens.borderRadiusS,
-          child: Image.file(file, width: _size, height: _size, fit: BoxFit.cover),
+          child: Image.file(
+            file,
+            width: _size,
+            height: _size,
+            fit: BoxFit.cover,
+            cacheWidth: decodeWidthFor(context, _size),
+          ),
         );
       },
     );

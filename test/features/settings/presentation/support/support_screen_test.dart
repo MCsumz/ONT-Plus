@@ -167,10 +167,10 @@ void main() {
       await tapRow(tester, 'support-way-code');
 
       expect(opened, [
-        'https://github.com/simonoppowa/OpenNutriTracker',
+        'https://github.com/MCsumz/ONT-Plus',
         'https://hosted.weblate.org/engage/opennutritracker/',
-        'https://github.com/simonoppowa/OpenNutriTracker/issues/new/choose',
-        'https://github.com/simonoppowa/OpenNutriTracker/blob/main/CONTRIBUTING.md',
+        'https://github.com/MCsumz/ONT-Plus/issues/new/choose',
+        'https://github.com/MCsumz/ONT-Plus/blob/main/CONTRIBUTING.md',
       ]);
     });
 

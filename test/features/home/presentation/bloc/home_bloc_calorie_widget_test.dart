@@ -228,8 +228,11 @@ void main() {
 
   Future<void> load(HomeBloc bloc) async {
     bloc.add(const LoadItemsEvent());
-    await bloc.stream.firstWhere((state) => state is HomeLoadedState);
-    await pumpEventQueue();
+    // A reload that changes nothing emits no new state (Home refreshes
+    // without a spinner in between), so wait for the load itself to run
+    // through rather than for a state.
+    await pumpEventQueue(times: 200);
+    expect(bloc.state, isA<HomeLoadedState>());
   }
 
   test('a load that crosses the day boundary stamps the widget with the day '

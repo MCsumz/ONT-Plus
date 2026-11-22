@@ -135,7 +135,6 @@ class _HomeDaySwiperState extends State<HomeDaySwiper>
     return LayoutBuilder(
       builder: (context, constraints) {
         _width = constraints.maxWidth;
-        final progress = (_dx.abs() / _width).clamp(0.0, 1.0);
         return GestureDetector(
           behavior: HitTestBehavior.translucent,
           onHorizontalDragUpdate: _onDragUpdate,
@@ -143,13 +142,13 @@ class _HomeDaySwiperState extends State<HomeDaySwiper>
           onHorizontalDragCancel: () {
             if (_leftBy == null) _animateTo(0);
           },
+          // Translate only: a fade would composite the whole page off
+          // screen on every frame of the swipe. The boundary keeps the
+          // page's own paint cached while it moves.
           child: ClipRect(
             child: Transform.translate(
               offset: Offset(_dx, 0),
-              child: Opacity(
-                opacity: 1 - progress * 0.35,
-                child: widget.child,
-              ),
+              child: RepaintBoundary(child: widget.child),
             ),
           ),
         );

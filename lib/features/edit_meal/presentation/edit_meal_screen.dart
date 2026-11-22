@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logging/logging.dart';
+import 'package:opennutritracker/core/utils/image_decode_size.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
@@ -979,6 +980,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
         cacheManager: locator<CacheManager>(),
         width: 120,
         height: 120,
+        memCacheWidth: decodeWidthFor(context, 120),
         placeholder: (context, string) => const DefaultMealImage(),
         errorWidget: (context, exception, stacktrace) =>
             const DefaultMealImage(),

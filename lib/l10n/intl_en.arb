@@ -270,7 +270,7 @@
   "alphaVersionName": "[Alpha]",
   "appDescription": "OpenNutriTracker is a free and open-source calorie and nutrient tracker that respects your privacy.",
   "appLicenseLabel": "GPL-3.0 license",
-  "appTitle": "OpenNutriTracker",
+  "appTitle": "ONT+",
   "appVersionName": "Version {versionNumber}",
   "@appVersionName": {"placeholders": {"versionNumber": {"type": "String"}}},
   "barcodeInvalidEan13CheckDigit": "This 13-digit barcode looks miskeyed: its last digit doesn't match the rest",
@@ -1679,5 +1679,12 @@
   "homeBackToTodayLabel": "Today",
   "@homeBackToTodayLabel": { "description": "Home date bar button that jumps back to today from another day." },
   "homePlanningHint": "Planning ahead — what you add here is logged on this day.",
-  "@homePlanningHint": { "description": "Shown on Home while it shows a future day." }
+  "@homePlanningHint": { "description": "Shown on Home while it shows a future day." },
+  "plusCreditLine": "ONT+ additions by {author}",
+  "@plusCreditLine": {
+    "description": "Credit under the app's version; the author made the ONT+ changes, not the original app.",
+    "placeholders": { "author": { "type": "String" } }
+  },
+  "basedOnUpstreamLine": "Based on OpenNutriTracker by Simon Oppowa and contributors",
+  "upstreamProjectLabel": "Original OpenNutriTracker project"
 }

@@ -2,6 +2,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:opennutritracker/core/utils/image_decode_size.dart';
 import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
 import 'package:opennutritracker/core/presentation/widgets/meal_value_unit_text.dart';
 import 'package:opennutritracker/core/styles/app_palette.dart';
@@ -138,6 +139,7 @@ class MealItemCard extends StatelessWidget {
           fit: BoxFit.cover,
           width: Dimens.mealThumb,
           height: Dimens.mealThumb,
+          memCacheWidth: decodeWidthFor(context, Dimens.mealThumb),
           imageUrl: mealEntity.thumbnailImageUrl ?? "",
         ),
       );

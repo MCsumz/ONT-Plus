@@ -2,12 +2,21 @@ import 'dart:io' show Platform;
 import 'package:package_info_plus/package_info_plus.dart';
 
 class AppConst {
-  static const userAgentAppName = "OpenNutriTracker";
+  static const userAgentAppName = "ONT-Plus";
   static const platformNameAndroid = "Android";
   static const platformNameIOS = "iOS";
   static const reportErrorEmail = "opennutritracker-dev@pm.me";
-  static const sourceCodeUrl =
+  /// This build's source, as the GPL asks of anyone shipping it.
+  static const sourceCodeUrl = "https://github.com/MCsumz/ONT-Plus";
+
+  /// The original project ONT+ is built on.
+  static const upstreamSourceCodeUrl =
       "https://github.com/simonoppowa/OpenNutriTracker";
+
+  /// Who made the ONT+ additions; the rest of the app is upstream's work.
+  static const plusAuthorName = "Marcell Marko";
+  static const plusAuthorUrl = "https://github.com/MCsumz";
+  static const plusAuthorHandle = "github.com/MCsumz";
 
   // Support page links (#1536). Every one opens outside the app.
   static const appStoreUrl = "https://apps.apple.com/app/id6451490901";

@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:intl/intl.dart';
+import 'package:opennutritracker/core/utils/image_decode_size.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
 import 'package:opennutritracker/core/presentation/widgets/meal_value_unit_text.dart';
@@ -214,6 +215,7 @@ class _Thumbnail extends StatelessWidget {
     } else if (intake.meal.mainImageUrl != null) {
       content = CachedNetworkImage(
         cacheManager: locator<CacheManager>(),
+        memCacheWidth: decodeWidthFor(context, IntakeCard.thumbSize),
         imageUrl: intake.meal.mainImageUrl ?? "",
         fit: BoxFit.cover,
         errorWidget: (context, url, error) => _fallback(),
@@ -238,20 +240,44 @@ class _Thumbnail extends StatelessWidget {
       );
 }
 
-class _LocalMealImage extends StatelessWidget {
+class _LocalMealImage extends StatefulWidget {
   final String relativePath;
 
   const _LocalMealImage({required this.relativePath});
 
   @override
+  State<_LocalMealImage> createState() => _LocalMealImageState();
+}
+
+class _LocalMealImageState extends State<_LocalMealImage> {
+  // Resolved once, not on every rebuild of the row: a new future each
+  // build made the photo blink out and back on every Home refresh.
+  late Future<String> _path = UserImageStorage.absolutePath(
+    widget.relativePath,
+  );
+
+  @override
+  void didUpdateWidget(covariant _LocalMealImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.relativePath != widget.relativePath) {
+      _path = UserImageStorage.absolutePath(widget.relativePath);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<String>(
-      future: UserImageStorage.absolutePath(relativePath),
+      future: _path,
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox.shrink();
-        final file = File(snapshot.data!);
-        if (!file.existsSync()) return const SizedBox.shrink();
-        return Image.file(file, fit: BoxFit.cover);
+        // A missing file shows nothing, through the decoder's own error
+        // path rather than a blocking existsSync on the UI thread.
+        return Image.file(
+          File(snapshot.data!),
+          fit: BoxFit.cover,
+          cacheWidth: decodeWidthFor(context, IntakeCard.thumbSize),
+          errorBuilder: (context, error, stack) => const SizedBox.shrink(),
+        );
       },
     );
   }

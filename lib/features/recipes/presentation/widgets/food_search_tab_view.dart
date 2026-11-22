@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:opennutritracker/core/utils/image_decode_size.dart';
 import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
 import 'package:opennutritracker/core/presentation/widgets/error_dialog.dart';
 import 'package:opennutritracker/core/styles/app_palette.dart';
@@ -308,6 +309,7 @@ class _PickableMealCard extends StatelessWidget {
                           fit: BoxFit.cover,
                           width: 52,
                           height: 52,
+                          memCacheWidth: decodeWidthFor(context, 52),
                           imageUrl: meal.thumbnailImageUrl ?? '',
                         ),
                       )

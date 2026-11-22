@@ -125,7 +125,7 @@
   "alphaVersionName": "[Alfa]",
   "appDescription": "OpenNutriTracker är en kostnadsfri app med öppen källkod som hjälper dig att följa ditt kalori- och näringsintag och respekterar din integritet.",
   "appLicenseLabel": "GPL-3.0-licens",
-  "appTitle": "OpenNutriTracker",
+  "appTitle": "ONT+",
   "appVersionName": "Version {versionNumber}",
   "@appVersionName": {
     "placeholders": {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:logging/logging.dart';
+import 'package:opennutritracker/core/utils/image_decode_size.dart';
 import 'package:opennutritracker/core/data/dbo/intake_type_dbo.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
@@ -520,6 +521,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                     child: CachedNetworkImage(
                       width: 250,
                       height: 250,
+                      memCacheWidth: decodeWidthFor(context, 250),
                       cacheManager: locator<CacheManager>(),
                       imageUrl: meal.mainImageUrl ?? "",
                       fit: BoxFit.cover,

@@ -125,7 +125,7 @@
   "alphaVersionName": "[Alfa]",
   "appDescription": "OpenNutriTracker es un contador gratuito y de código abierto de calorías y nutrientes que respeta tu privacidad.",
   "appLicenseLabel": "Licencia GPL-3.0",
-  "appTitle": "OpenNutriTracker",
+  "appTitle": "ONT+",
   "appVersionName": "Versión {versionNumber}",
   "@appVersionName": {
     "placeholders": {

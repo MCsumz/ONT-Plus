@@ -46,6 +46,9 @@ Everything from OpenNutriTracker 2.7.0, plus:
   pre-filled with what you logged: live calories, macros and nutrients, unit, a meal picker and
   **Save changes**. The day's totals adjust by the difference.
 - In the Diary, **Copy to today** for past days now lives in each food's ⋮ menu, so long-press is free for dragging.
+- **Smoother** — Home and the Diary update in place after you add, edit or delete something, without
+  a loading flash or losing your scroll position; food photos are decoded at the size they are shown,
+  so lists scroll more smoothly and use far less memory.
 
 ## Install
 
@@ -195,7 +198,7 @@ signed with the fork's release key via `android/key.properties`, which is not in
 
 ## Credits and license
 
-ONT+ is built on [OpenNutriTracker](https://github.com/simonoppowa/OpenNutriTracker) by
+The ONT+ additions are by **Marcell Marko** ([@MCsumz](https://github.com/MCsumz)). ONT+ is built on [OpenNutriTracker](https://github.com/simonoppowa/OpenNutriTracker) by
 [@simonoppowa](https://github.com/simonoppowa) and its contributors; nearly all of the app is their work. Upstream's original README
 is kept in [docs/upstream-README.md](docs/upstream-README.md).
 

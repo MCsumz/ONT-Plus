@@ -101,7 +101,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       await _load(emit);
     });
     on<LoadItemsEvent>((event, emit) async {
-      emit(HomeLoadingState());
+      // A refresh after an edit keeps the page on screen and swaps the new
+      // figures in; a spinner in between flashed the whole page and lost
+      // the scroll position on every add, edit and delete.
+      if (state is! HomeLoadedState) emit(HomeLoadingState());
       await _load(emit);
     });
   }

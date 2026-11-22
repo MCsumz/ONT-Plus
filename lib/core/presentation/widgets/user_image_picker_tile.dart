@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:opennutritracker/core/utils/image_decode_size.dart';
 import 'package:opennutritracker/core/styles/dimens.dart';
 import 'package:opennutritracker/core/utils/user_image_storage.dart';
 import 'package:opennutritracker/generated/l10n.dart';
@@ -107,6 +108,7 @@ class UserImagePickerTile extends StatelessWidget {
                                 return Image.file(
                                   File(snapshot.data!),
                                   fit: BoxFit.cover,
+                                  cacheWidth: decodeWidthFor(context, 96),
                                   errorBuilder: (_, error, stack) => Container(
                                     color: theme.colorScheme.primaryContainer,
                                     child: Icon(

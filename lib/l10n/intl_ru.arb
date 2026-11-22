@@ -125,7 +125,7 @@
   "alphaVersionName": "[Альфа]",
   "appDescription": "OpenNutriTracker — бесплатный трекер калорий и нутриентов с открытым кодом, уважающий вашу приватность.",
   "appLicenseLabel": "Лицензия GPL-3.0",
-  "appTitle": "OpenNutriTracker",
+  "appTitle": "ONT+",
   "appVersionName": "Версия {versionNumber}",
   "@appVersionName": {
     "placeholders": {
