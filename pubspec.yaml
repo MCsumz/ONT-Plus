@@ -52,6 +52,9 @@ dependencies:
   flutter_cache_manager: ^3.4.2
   envied: ^1.3.10
   archive: 4.2.0
+  # AES-256-GCM for the phone-to-phone transfer (already in the tree via
+  # other packages; listed so the app can use it directly).
+  pointycastle: ^4.0.0
   file_picker: ^13.1.0
 
   flutter_bloc: ^9.1.1

@@ -73,6 +73,7 @@ import 'package:opennutritracker/core/domain/usecase/switch_profile_usecase.dart
 import 'package:opennutritracker/core/domain/usecase/toggle_favourite_meal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/update_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/move_intake_usecase.dart';
+import 'package:opennutritracker/features/settings/domain/full_backup_extras.dart';
 import 'package:opennutritracker/core/domain/usecase/update_profile_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/update_user_activity_usecase.dart';
 import 'package:opennutritracker/core/utils/config_initializer.dart';
@@ -580,6 +581,7 @@ Future<void> initLocator() async {
       locator(),
       locator(),
       locator(),
+      extras: const FullBackupExtras(),
     ),
   );
   locator.registerLazySingleton(
@@ -606,6 +608,7 @@ Future<void> initLocator() async {
             importedActivities: importedActivities,
             keyedByOffsetMinutes: keyedByOffsetMinutes,
           ),
+      extras: const FullBackupExtras(),
     ),
   );
   locator.registerLazySingleton(() => ImportMealsCsvUsecase(locator()));

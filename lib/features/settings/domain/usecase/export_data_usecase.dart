@@ -23,6 +23,7 @@ import 'package:opennutritracker/core/utils/export_write_verifier.dart';
 import 'package:opennutritracker/core/utils/tracked_day_lock.dart';
 import 'package:opennutritracker/core/utils/user_image_storage.dart';
 import 'package:opennutritracker/features/settings/domain/export_import_failure.dart';
+import 'package:opennutritracker/features/settings/domain/full_backup_extras.dart';
 import 'package:opennutritracker/features/settings/domain/goal_settings_backup.dart';
 import 'package:opennutritracker/features/settings/domain/tracked_day_boundary_record.dart';
 
@@ -51,8 +52,12 @@ class ExportDataUsecase {
     this._weightLogRepository,
     this._customActivityTemplateRepository,
     this._configRepository,
-    this._favouriteMealRepository,
-  );
+    this._favouriteMealRepository, {
+    FullBackupExtras? extras,
+  }) : _extras = extras;
+
+  /// What ONT+ adds to a JSON backup; null writes the original set only.
+  final FullBackupExtras? _extras;
 
   /// Exports user activity, intake, tracked day, recipe, weight-log, Custom
   /// activity template and favourites data, plus the profile's goal
@@ -141,8 +146,7 @@ class ExportDataUsecase {
   /// #1061 that matters to someone restoring a backup.
   ///
   /// Extracted from @AzazelSensei's #1083, which had the seam and the test
-  /// this exists for.
-  @visibleForTesting
+  /// this exists for. Also how the phone-to-phone sync builds its bundle.
   Future<Archive> assembleArchive({
     required ExportFormat format,
     required String userActivityJsonFileName,
@@ -327,6 +331,7 @@ class ExportDataUsecase {
     for (final path in imagePaths) {
       await _addUserImage(archive, path);
     }
+    if (format == ExportFormat.json) await _extras?.addTo(archive);
     return archive;
   }
 

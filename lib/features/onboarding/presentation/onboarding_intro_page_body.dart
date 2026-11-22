@@ -7,6 +7,8 @@ import 'package:opennutritracker/core/utils/demo/demo_seeder.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/core/utils/url_const.dart';
 import 'package:opennutritracker/features/profile/presentation/utils/profile_switch_coordinator.dart';
+import 'package:opennutritracker/features/sync/domain/sync_engine.dart';
+import 'package:opennutritracker/features/sync/presentation/phone_sync_screen.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 import 'package:opennutritracker/core/utils/safe_url_launcher.dart';
 
@@ -152,6 +154,35 @@ class _OnboardingIntroPageBodyState extends State<OnboardingIntroPageBody> {
                   ),
                   textAlign: TextAlign.center,
                 ),
+                const SizedBox(height: 16.0),
+                Semantics(
+                  identifier: 'onboarding-sync-from-phone',
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      // Like the demo: tappable without the policy so the
+                      // tap can explain itself.
+                      onPressed: _seedingDemo
+                          ? null
+                          : (_acceptedPolicy ? _syncFromPhone : _policyRequiredToSync),
+                      style: _acceptedPolicy
+                          ? null
+                          : OutlinedButton.styleFrom(
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.38),
+                            ),
+                      icon: const Icon(Icons.qr_code_scanner_rounded),
+                      label: Text(S.of(context).syncOnboardingLabel),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4.0),
+                Text(
+                  S.of(context).syncOnboardingSubtitle,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 8.0),
                 TextButton.icon(
                   onPressed: () => _openSources(context),
@@ -199,6 +230,14 @@ class _OnboardingIntroPageBodyState extends State<OnboardingIntroPageBody> {
       );
   }
 
+  void _policyRequiredToSync() {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(S.of(context).onboardingBlockedPolicySnack)),
+      );
+  }
+
   /// Seeds the active profile with sample data and jumps straight to Home.
   /// Requires the privacy-policy checkbox (same bar as Start) so demo entry
   /// still records legal acceptance; anonymous crash reporting stays off
@@ -225,6 +264,23 @@ class _OnboardingIntroPageBodyState extends State<OnboardingIntroPageBody> {
         SnackBar(content: Text(S.of(context).onboardingTryDemoError)),
       );
     }
+  }
+
+  /// Takes the diary and profile from a phone already using the app, in
+  /// place of the setup questions.
+  Future<void> _syncFromPhone() async {
+    final synced = await openPhoneSync(
+      context,
+      SyncRole.join,
+      onboarding: SyncOnboarding(
+        acceptedDataCollection: _acceptedDataCollection,
+      ),
+    );
+    if (!synced || !mounted) return;
+    ProfileSwitchCoordinator.reloadTabBlocs();
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(NavigationOptions.mainRoute, (route) => false);
   }
 
   Future<void> _launchUrl() async {

@@ -9,6 +9,7 @@ import 'package:opennutritracker/features/settings/domain/usecase/export_data_us
 import 'package:opennutritracker/features/settings/presentation/bloc/export_import_bloc.dart';
 import 'package:opennutritracker/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/export_import_error_text.dart';
+import 'package:opennutritracker/features/sync/presentation/phone_sync_screen.dart';
 import 'package:opennutritracker/features/trends/presentation/bloc/trends_bloc.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
@@ -139,6 +140,45 @@ class _ExportImportDialogState extends State<ExportImportDialog> {
                   return const SizedBox.shrink();
                 },
               ),
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+              Text(
+                S.of(context).syncTitle,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      identifier: 'sync-show-code',
+                      child: OutlinedButton.icon(
+                        onPressed: () => _sync(SyncRole.host),
+                        icon: const Icon(Icons.qr_code_2_rounded),
+                        label: Text(
+                          S.of(context).syncShowCodeLabel,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Semantics(
+                      identifier: 'sync-scan-code',
+                      child: OutlinedButton.icon(
+                        onPressed: () => _sync(SyncRole.join),
+                        icon: const Icon(Icons.qr_code_scanner_rounded),
+                        label: Text(
+                          S.of(context).syncScanCodeLabel,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ],
@@ -158,6 +198,11 @@ class _ExportImportDialogState extends State<ExportImportDialog> {
         ),
       ],
     );
+  }
+
+  Future<void> _sync(SyncRole role) async {
+    final synced = await openPhoneSync(context, role);
+    if (synced) refreshScreens();
   }
 
   void refreshScreens() {

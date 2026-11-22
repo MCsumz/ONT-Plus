@@ -1620,5 +1620,53 @@
   "editLoggedEntryMealLabel": "Meal",
   "@editLoggedEntryMealLabel": {
     "description": "Label above the Breakfast / Lunch / Dinner / Snack choice when editing a logged entry."
+  },
+  "syncTitle": "Sync with another phone",
+  "@syncTitle": {
+    "description": "Title of the phone-to-phone sync screen and its entry in Export / Import."
+  },
+  "syncIntro": "Keep ONT+ on two phones in step. One phone shows a code, the other scans it, and both end up with the same diary: whatever was added, changed or deleted on either phone since the last sync is carried over. Both phones need to be on the same Wi-Fi or hotspot.",
+  "syncShowCodeLabel": "Show code",
+  "@syncShowCodeLabel": {
+    "description": "Button: this phone hosts the sync and shows a QR code."
+  },
+  "syncScanCodeLabel": "Scan code",
+  "@syncScanCodeLabel": {
+    "description": "Button: this phone scans the other phone's sync QR code."
+  },
+  "syncPreparing": "Preparing this phone's data…",
+  "syncShowCodeHint": "On the other phone, open Settings → Export / Import → Sync with another phone → Scan code, and point it at this code.",
+  "syncScanHint": "Point the camera at the code shown on the other phone.",
+  "syncNoNetwork": "This phone isn't on Wi-Fi or a hotspot. Connect both phones to the same network and try again.",
+  "syncExchanging": "Exchanging data…",
+  "syncMerging": "Merging…",
+  "syncWaitingForOther": "Waiting for the other phone to finish…",
+  "syncDoneTitle": "Synced",
+  "syncNothingChanged": "Already in sync — nothing changed on this phone.",
+  "syncFirstSyncNote": "First sync between these phones: both diaries were combined and nothing was deleted.",
+  "syncProfileReceived": "Your profile and settings came from the other phone.",
+  "syncOtherPhoneFailed": "The other phone could not finish. Run the sync again.",
+  "syncErrorConnect": "Couldn't reach the other phone. Check that both are on the same Wi-Fi or hotspot, then try again.",
+  "syncErrorGeneric": "The sync didn't finish. Try again.",
+  "syncErrorNoProfile": "Neither phone has a profile yet. Finish the setup on one of them first.",
+  "syncErrorUnreadable": "The other phone runs a version of ONT+ this one can't read. Update both to the same version.",
+  "syncOnboardingLabel": "Sync from another phone",
+  "@syncOnboardingLabel": {
+    "description": "Welcome page button: take the diary and profile from a phone already using ONT+."
+  },
+  "syncOnboardingSubtitle": "Already use ONT+ on another phone? Scan its code to bring everything over.",
+  "syncChangesSummary": "{added} added · {updated} updated · {removed} removed on this phone",
+  "@syncChangesSummary": {
+    "placeholders": {
+      "added": { "type": "int" },
+      "updated": { "type": "int" },
+      "removed": { "type": "int" }
+    }
+  },
+  "syncConflictsNote": "{count, plural, =1{1 entry was changed on both phones; the version on the phone showing the code was kept.} other{{count} entries were changed on both phones; the versions on the phone showing the code were kept.}}",
+  "@syncConflictsNote": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
   }
 }

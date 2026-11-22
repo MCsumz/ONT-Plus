@@ -226,7 +226,9 @@ void main() {
 
     // Never reaches seedDemoData (which would need Hive); an unaccepted
     // policy routes the tap to the explanation instead.
-    await tester.tap(find.byType(OutlinedButton));
+    await tester.tap(
+      find.widgetWithText(OutlinedButton, l10nEn.onboardingTryDemoLabel),
+    );
     await tester.pump();
 
     expect(
@@ -235,6 +237,22 @@ void main() {
     );
     expect(find.byType(CircularProgressIndicator), findsNothing,
         reason: 'no seeding should have started');
+  });
+
+  testWidgets('tapping Sync from another phone without the policy explains why',
+      (tester) async {
+    await pumpIntroPage(tester, onSetPageContent: (_, _) {});
+
+    final sync = find.widgetWithText(
+      OutlinedButton,
+      l10nEn.syncOnboardingLabel,
+    );
+    await tester.ensureVisible(sync);
+    await tester.pumpAndSettle();
+    await tester.tap(sync);
+    await tester.pump();
+
+    expect(find.text(l10nEn.onboardingBlockedPolicySnack), findsOneWidget);
   });
 
   testWidgets('tapping the policy ListTile (not just the checkbox) also toggles',

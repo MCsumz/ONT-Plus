@@ -1,4 +1,4 @@
-> This is the original README of [simonoppowa/OpenNutriTracker](https://github.com/simonoppowa/OpenNutriTracker), kept for reference. For this fork see the [ONT Plus README](../README.md).
+> This is the original README of [simonoppowa/OpenNutriTracker](https://github.com/simonoppowa/OpenNutriTracker), kept for reference. For this fork see the [ONT+ README](../README.md).
 
 <p align="center">
   <picture>

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Override the app label for the `develop` Gradle flavor, which this
-         fork ships as "ONT Plus", so it shows up under its own name on the
+         fork ships as "ONT+", so it shows up under its own name on the
          home screen rather than the same "OpenNutriTracker" as a Play Store
          install.
          Combined with the .develop applicationId suffix in
          android/app/build.gradle, both installs can coexist on the same
          device and remain easy to tell apart. -->
-    <string name="app_name">ONT Plus</string>
+    <string name="app_name">ONT+</string>
 </resources>

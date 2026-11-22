@@ -24,6 +24,7 @@ import 'package:opennutritracker/core/utils/off_micronutrient_repair.dart';
 import 'package:opennutritracker/core/utils/tracked_day_lock.dart';
 import 'package:opennutritracker/core/utils/user_image_storage.dart';
 import 'package:opennutritracker/features/settings/domain/export_import_failure.dart';
+import 'package:opennutritracker/features/settings/domain/full_backup_extras.dart';
 import 'package:opennutritracker/features/settings/domain/goal_settings_backup.dart';
 import 'package:opennutritracker/features/settings/domain/tracked_day_boundary_record.dart';
 
@@ -74,8 +75,13 @@ class ImportDataUsecase {
     this._favouriteMealRepository, {
     PickImportFile pickFile = _pickAnyFile,
     RestoreTrackedDays? restoreTrackedDays,
+    FullBackupExtras? extras,
   }) : _pickFile = pickFile,
-       _restoreTrackedDays = restoreTrackedDays;
+       _restoreTrackedDays = restoreTrackedDays,
+       _extras = extras;
+
+  /// What ONT+ adds to a JSON backup; null restores the original set only.
+  final FullBackupExtras? _extras;
 
   /// Imports user activity, intake, tracked day, and (optionally) recipe,
   /// weight log, Custom activity template, goal settings and favourites
@@ -100,6 +106,36 @@ class ImportDataUsecase {
   }) async {
     final startedOn = ProfileStamp.now();
     final archive = await _pickAndDecodeArchive();
+    return importArchive(
+      archive,
+      userActivityJsonFileName,
+      userIntakeJsonFileName,
+      trackedDayJsonFileName,
+      recipeJsonFileName,
+      weightLogJsonFileName,
+      customActivityTemplateJsonFileName,
+      goalSettingsJsonFileName: goalSettingsJsonFileName,
+      favouriteJsonFileName: favouriteJsonFileName,
+      startedOn: startedOn,
+    );
+  }
+
+  /// Imports an already-decoded JSON backup [archive]: what [importData]
+  /// does after the file picker. Same validation and writes, then the
+  /// extras of an all-inclusive backup (see [FullBackupExtras]).
+  Future<bool> importArchive(
+    Archive archive,
+    String userActivityJsonFileName,
+    String userIntakeJsonFileName,
+    String trackedDayJsonFileName,
+    String recipeJsonFileName,
+    String weightLogJsonFileName,
+    String customActivityTemplateJsonFileName, {
+    String goalSettingsJsonFileName = 'goal_settings.json',
+    String favouriteJsonFileName = 'user_favourites.json',
+    ProfileStamp? startedOn,
+  }) async {
+    startedOn ??= ProfileStamp.now();
 
     // Decode every entry before writing anything (#1357): the upserts
     // below replace and delete rows on the device, so an archive with a
@@ -227,6 +263,7 @@ class ImportDataUsecase {
 
       return true;
     }, startedOn: startedOn);
+    if (imported == true) await _extras?.restoreFrom(archive);
     return imported ?? false;
   }
 
