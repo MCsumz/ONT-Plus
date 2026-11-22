@@ -10,6 +10,27 @@
   Open-source calorie, macro, and micronutrient logging for Android and iOS.
 </p>
 
+> [!NOTE]
+> **ONT Plus** — this fork, [MCsumz/ONT-Plus](https://github.com/MCsumz/ONT-Plus),
+> is OpenNutriTracker 2.7.0 with a few diary quality-of-life changes. Everything else is upstream
+> [simonoppowa/OpenNutriTracker](https://github.com/simonoppowa/OpenNutriTracker).
+>
+> - **Swipe to delete** — swipe a logged food left, confirm, done. Replaces the drag-to-trash bar.
+> - **Move between meals** — long-press a food and drag it onto Breakfast, Lunch, Dinner or Snack
+>   (the page scrolls while you hold it near an edge), or use **Move to…** in its ⋮ menu.
+>   The day's totals are untouched.
+> - **Net kcal at a glance** — each Diary day shows what is left (+) or over (−) the goal,
+>   with eaten · burned · goal underneath; the calendar shows that number under every logged day.
+> - **Full-screen edit** — tapping a logged food opens the same detail screen as when adding it,
+>   pre-filled, with live nutrients, unit, meal picker and **Save changes**.
+>
+> Android APKs are on this fork's [Releases](https://github.com/MCsumz/ONT-Plus/releases)
+> page; iOS is untested. ONT Plus installs **next to** the official app as a separate app. To bring
+> your data over: in the official app, Settings → Export (**JSON**); in ONT Plus, complete the
+> first-time setup, then Settings → Import. The body profile from the setup is not part of the
+> export. The app's own food database server is not configured in this build; Open Food Facts
+> search works.
+
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPLv3-22de5f?style=flat-square" /></a>
   <a href="https://github.com/simonoppowa/OpenNutriTracker/releases"><img alt="Release" src="https://img.shields.io/github/v/release/simonoppowa/OpenNutriTracker?style=flat-square&color=22de5f" /></a>
