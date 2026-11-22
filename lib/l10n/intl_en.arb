@@ -1668,5 +1668,16 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "homeDayToday": "Today",
+  "@homeDayToday": { "description": "Home date bar: the day shown is today." },
+  "homeDayYesterday": "Yesterday",
+  "homeDayTomorrow": "Tomorrow",
+  "homePreviousDayLabel": "Previous day",
+  "@homePreviousDayLabel": { "description": "Tooltip and screen reader label of the Home date bar's back arrow." },
+  "homeNextDayLabel": "Next day",
+  "homeBackToTodayLabel": "Today",
+  "@homeBackToTodayLabel": { "description": "Home date bar button that jumps back to today from another day." },
+  "homePlanningHint": "Planning ahead — what you add here is logged on this day.",
+  "@homePlanningHint": { "description": "Shown on Home while it shows a future day." }
 }

@@ -26,6 +26,8 @@ import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart'
 import 'package:opennutritracker/features/home/presentation/widgets/dashboard_widget.dart';
 import 'package:opennutritracker/features/home/presentation/widgets/intake_vertical_list.dart';
 import 'package:opennutritracker/features/home/presentation/widgets/fasting_home_chip.dart';
+import 'package:opennutritracker/features/home/presentation/widgets/home_date_bar.dart';
+import 'package:opennutritracker/features/home/presentation/widgets/home_day_swiper.dart';
 import 'package:opennutritracker/features/home/presentation/widgets/quick_water_widget.dart';
 import 'package:opennutritracker/core/domain/entity/body_weight_unit_entity.dart';
 import 'package:opennutritracker/features/home/presentation/widgets/quick_weight_widget.dart';
@@ -108,6 +110,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             state.snackSharePct,
             state.waterMlToday,
             state.waterGoalMl,
+            state.viewedDay,
+            state.isToday,
           );
         } else {
           return _getLoadingContent();
@@ -165,40 +169,189 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     int snackSharePct,
     int waterMlToday,
     int waterGoalMl,
+    DateTime? viewedDay,
+    bool isToday,
   ) {
     if (showDisclaimerDialog) {
       _showDisclaimerDialog(context);
     }
+    final today = _today;
+    final shownDay = viewedDay ?? today;
+    // What adding to a section files under: now for today, the day's
+    // label for another day (the Diary does the same).
+    final entryDay = isToday ? DateTime.now() : shownDay;
+    final isFuture = shownDay.isAfter(today);
+    return Column(
+      children: [
+        HomeDateBar(
+          day: shownDay,
+          today: today,
+          canGoBack: shownDay.isAfter(_firstDay),
+          canGoForward: shownDay.isBefore(_lastDay),
+          onPrevious: () => _moveDay(-1),
+          onNext: () => _moveDay(1),
+          onToday: () => _homeBloc.add(const ChangeHomeDayEvent(null)),
+          onPick: _showDay,
+          firstDay: _firstDay,
+          lastDay: _lastDay,
+        ),
+        Expanded(
+          child: HomeDaySwiper(
+            day: shownDay,
+            onChangeDay: _moveDay,
+            child: _buildDayContent(
+              context,
+              isToday: isToday,
+              isFuture: isFuture,
+              entryDay: entryDay,
+              totalKcalDaily: totalKcalDaily,
+              userGender: userGender,
+              userCaloriesProfile: userCaloriesProfile,
+              totalKcalLeft: totalKcalLeft,
+              totalKcalSupplied: totalKcalSupplied,
+              totalKcalBurned: totalKcalBurned,
+              totalCarbsIntake: totalCarbsIntake,
+              totalFatsIntake: totalFatsIntake,
+              totalProteinsIntake: totalProteinsIntake,
+              totalCarbsGoal: totalCarbsGoal,
+              totalFatsGoal: totalFatsGoal,
+              totalProteinsGoal: totalProteinsGoal,
+              breakfastIntakeList: breakfastIntakeList,
+              lunchIntakeList: lunchIntakeList,
+              dinnerIntakeList: dinnerIntakeList,
+              snackIntakeList: snackIntakeList,
+              userActivities: userActivities,
+              usesImperialUnits: usesImperialUnits,
+              bodyWeightUnit: bodyWeightUnit,
+              showActivityTracking: showActivityTracking,
+              showMealMacros: showMealMacros,
+              userWeightKg: userWeightKg,
+              breakfastKcalTarget: breakfastKcalTarget,
+              lunchKcalTarget: lunchKcalTarget,
+              dinnerKcalTarget: dinnerKcalTarget,
+              snackKcalTarget: snackKcalTarget,
+              breakfastSharePct: breakfastSharePct,
+              lunchSharePct: lunchSharePct,
+              dinnerSharePct: dinnerSharePct,
+              snackSharePct: snackSharePct,
+              waterMlToday: waterMlToday,
+              waterGoalMl: waterGoalMl,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The logical today Home last loaded.
+  DateTime get _today => DateUtils.dateOnly(_homeBloc.currentDay);
+
+  /// How far back and ahead Home can browse: the Diary's five years back,
+  /// and a year ahead for planning.
+  DateTime get _firstDay => DateTime(_today.year - 5, _today.month, _today.day);
+  DateTime get _lastDay => DateTime(_today.year + 1, _today.month, _today.day);
+
+  bool _moveDay(int delta) {
+    final from = _homeBloc.viewedDay ?? _today;
+    final target = DateUtils.addDaysToDate(from, delta);
+    if (target.isBefore(_firstDay) || target.isAfter(_lastDay)) return false;
+    _showDay(target);
+    return true;
+  }
+
+  void _showDay(DateTime day) {
+    final date = DateUtils.dateOnly(day);
+    _homeBloc.add(
+      ChangeHomeDayEvent(DateUtils.isSameDay(date, _today) ? null : date),
+    );
+  }
+
+  Widget _buildDayContent(
+    BuildContext context, {
+    required bool isToday,
+    required bool isFuture,
+    required DateTime entryDay,
+    required double totalKcalDaily,
+    required UserGenderEntity userGender,
+    required CaloriesProfileEntity? userCaloriesProfile,
+    required double totalKcalLeft,
+    required double totalKcalSupplied,
+    required double totalKcalBurned,
+    required double totalCarbsIntake,
+    required double totalFatsIntake,
+    required double totalProteinsIntake,
+    required double totalCarbsGoal,
+    required double totalFatsGoal,
+    required double totalProteinsGoal,
+    required List<IntakeEntity> breakfastIntakeList,
+    required List<IntakeEntity> lunchIntakeList,
+    required List<IntakeEntity> dinnerIntakeList,
+    required List<IntakeEntity> snackIntakeList,
+    required List<UserActivityEntity> userActivities,
+    required bool usesImperialUnits,
+    required BodyWeightUnit bodyWeightUnit,
+    required bool showActivityTracking,
+    required bool showMealMacros,
+    required double userWeightKg,
+    required double breakfastKcalTarget,
+    required double lunchKcalTarget,
+    required double dinnerKcalTarget,
+    required double snackKcalTarget,
+    required int breakfastSharePct,
+    required int lunchSharePct,
+    required int dinnerSharePct,
+    required int snackSharePct,
+    required int waterMlToday,
+    required int waterGoalMl,
+  }) {
     return Stack(
       children: [
         ListView(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Dimens.spacing16,
-                Dimens.spacing16,
-                Dimens.spacing16,
-                Dimens.spacing4,
+            // Weight, water and fasting record "now", so they show on today
+            // only; other days show what was logged on them.
+            if (isToday)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Dimens.spacing16,
+                  Dimens.spacing16,
+                  Dimens.spacing16,
+                  Dimens.spacing4,
+                ),
+                // Wrap rather than Row so the two chips drop onto a second line
+                // at large text scale instead of overflowing off the edge.
+                child: Wrap(
+                  spacing: Dimens.spacing12,
+                  runSpacing: Dimens.spacing8,
+                  children: [
+                    QuickWeightWidget(
+                      weightKg: userWeightKg,
+                      bodyWeightUnit: bodyWeightUnit,
+                    ),
+                    QuickWaterWidget(
+                      waterMlToday: waterMlToday,
+                      waterGoalMl: waterGoalMl,
+                      usesImperialUnits: usesImperialUnits,
+                    ),
+                  ],
+                ),
               ),
-              // Wrap rather than Row so the two chips drop onto a second line
-              // at large text scale instead of overflowing off the edge.
-              child: Wrap(
-                spacing: Dimens.spacing12,
-                runSpacing: Dimens.spacing8,
-                children: [
-                  QuickWeightWidget(
-                    weightKg: userWeightKg,
-                    bodyWeightUnit: bodyWeightUnit,
+            if (isToday) const FastingHomeChip(),
+            if (isFuture)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Dimens.spacing16,
+                  Dimens.spacing12,
+                  Dimens.spacing16,
+                  0,
+                ),
+                child: Text(
+                  S.of(context).homePlanningHint,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                   ),
-                  QuickWaterWidget(
-                    waterMlToday: waterMlToday,
-                    waterGoalMl: waterGoalMl,
-                    usesImperialUnits: usesImperialUnits,
-                  ),
-                ],
+                ),
               ),
-            ),
-            const FastingHomeChip(),
             const SizedBox(height: Dimens.spacing8),
             DashboardWidget(
               totalKcalDaily: totalKcalDaily,
@@ -236,7 +389,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
             if (showActivityTracking)
               ActivityVerticalList(
-                day: DateTime.now(),
+                day: entryDay,
                 title: S.of(context).activityLabel,
                 userActivityList: userActivities,
                 onItemLongPressedCallback: onActivityItemLongPressed,
@@ -252,7 +405,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               intakes: breakfastIntakeList,
             ))
               IntakeVerticalList(
-                day: DateTime.now(),
+                day: entryDay,
                 title: S.of(context).breakfastLabel,
                 listIcon: IntakeTypeEntity.breakfast.getIconData(),
                 addMealType: AddMealType.breakfastType,
@@ -268,7 +421,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               intakes: lunchIntakeList,
             ))
               IntakeVerticalList(
-                day: DateTime.now(),
+                day: entryDay,
                 title: S.of(context).lunchLabel,
                 listIcon: IntakeTypeEntity.lunch.getIconData(),
                 addMealType: AddMealType.lunchType,
@@ -284,7 +437,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               intakes: dinnerIntakeList,
             ))
               IntakeVerticalList(
-                day: DateTime.now(),
+                day: entryDay,
                 title: S.of(context).dinnerLabel,
                 addMealType: AddMealType.dinnerType,
                 listIcon: IntakeTypeEntity.dinner.getIconData(),
@@ -300,7 +453,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               intakes: snackIntakeList,
             ))
               IntakeVerticalList(
-                day: DateTime.now(),
+                day: entryDay,
                 title: S.of(context).snackLabel,
                 listIcon: IntakeTypeEntity.snack.getIconData(),
                 addMealType: AddMealType.snackType,
@@ -439,7 +592,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final edit = await openLoggedIntakeEditor(
       context,
       intakeEntity,
-      DateTime.now(),
+      _homeBloc.viewedDay ?? DateTime.now(),
       usesImperialUnits,
     );
     if (edit != null) {
@@ -504,7 +657,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   /// honest cheap path: it costs one config read plus a few Hive scans,
   /// and it is correct under any boundary setting.
   void _refreshPageOnDayChange() {
-    _homeBloc.add(const LoadItemsEvent());
+    // Home opens on today: coming back to the app leaves a browsed day.
+    if (_homeBloc.viewedDay != null) {
+      _homeBloc.add(const ChangeHomeDayEvent(null));
+    } else {
+      _homeBloc.add(const LoadItemsEvent());
+    }
   }
 
   /// Picks up workouts that landed in the platform health store while the app

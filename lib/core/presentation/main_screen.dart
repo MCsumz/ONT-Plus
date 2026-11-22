@@ -5,6 +5,7 @@ import 'package:opennutritracker/core/presentation/widgets/demo_mode_banner.dart
 import 'package:opennutritracker/core/styles/app_palette.dart';
 import 'package:opennutritracker/core/utils/health_rationale_service.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
 import 'package:opennutritracker/core/utils/meal_type_suggester.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/features/diary/diary_page.dart';
@@ -215,7 +216,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       useSafeArea: true,
       builder: (BuildContext context) {
         return AddItemBottomSheet(
-          day: DateTime.now(),
+          // From Home, the day it shows: a browsed day, past or planned.
+          day: (_selectedPageIndex == 0
+                  ? locator<HomeBloc>().viewedDay
+                  : null) ??
+              DateTime.now(),
           showActivityTracking: config.showActivityTracking,
           usesImperialUnits: config.usesImperialFoodUnits,
           suggestedType: MealTypeSuggester.suggestFromTime(

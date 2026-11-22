@@ -69,6 +69,38 @@ class _Intake extends Fake implements GetIntakeUsecase {
     int dayStartOffsetHours = 0,
     int dayStartOffsetMinutes = 0,
   }) async => [];
+
+  // Home reads the day it shows, today included, by day.
+  @override
+  Future<List<IntakeEntity>> getBreakfastIntakeByDay(
+    DateTime day, {
+    int dayStartOffsetHours = 0,
+    int dayStartOffsetMinutes = 0,
+  }) async {
+    duringLoad();
+    return [];
+  }
+
+  @override
+  Future<List<IntakeEntity>> getLunchIntakeByDay(
+    DateTime day, {
+    int dayStartOffsetHours = 0,
+    int dayStartOffsetMinutes = 0,
+  }) async => [];
+
+  @override
+  Future<List<IntakeEntity>> getDinnerIntakeByDay(
+    DateTime day, {
+    int dayStartOffsetHours = 0,
+    int dayStartOffsetMinutes = 0,
+  }) async => [];
+
+  @override
+  Future<List<IntakeEntity>> getSnackIntakeByDay(
+    DateTime day, {
+    int dayStartOffsetHours = 0,
+    int dayStartOffsetMinutes = 0,
+  }) async => [];
 }
 
 class _NoActivities extends Fake implements GetUserActivityUsecase {
@@ -77,11 +109,24 @@ class _NoActivities extends Fake implements GetUserActivityUsecase {
     int dayStartOffsetHours = 0,
     int dayStartOffsetMinutes = 0,
   }) async => [];
+
+  @override
+  Future<List<UserActivityEntity>> getUserActivityByDay(
+    DateTime day, {
+    int dayStartOffsetHours = 0,
+    int dayStartOffsetMinutes = 0,
+  }) async => [];
 }
 
 class _NoWater extends Fake implements GetWaterIntakeUsecase {
   @override
   Future<List<WaterIntakeEntity>> getTodayEntries({
+    required int dayStartOffsetTotalMinutes,
+  }) async => [];
+
+  @override
+  Future<List<WaterIntakeEntity>> getEntriesForDay(
+    DateTime logicalDayStart, {
     required int dayStartOffsetTotalMinutes,
   }) async => [];
 }

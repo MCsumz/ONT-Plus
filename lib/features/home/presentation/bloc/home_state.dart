@@ -61,6 +61,13 @@ class HomeLoadedState extends HomeState {
   final int waterGoalMl;
   final List<WaterIntakeEntity> waterIntakes;
 
+  /// The day Home shows, as a day label (the date at midnight).
+  final DateTime? viewedDay;
+
+  /// Whether [viewedDay] is the logical today; the today-only parts of Home
+  /// (weight, water, fasting, the calorie widget) show only then.
+  final bool isToday;
+
   const HomeLoadedState({
     required this.showDisclaimerDialog,
     required this.totalKcalDaily,
@@ -96,6 +103,8 @@ class HomeLoadedState extends HomeState {
     required this.waterIntakes,
     this.showActivityTracking = true,
     this.showMealMacros = true,
+    this.viewedDay,
+    this.isToday = true,
   });
 
   @override
@@ -112,5 +121,9 @@ class HomeLoadedState extends HomeState {
     waterGoalMl,
     waterIntakes,
     showActivityTracking,
+    totalKcalSupplied,
+    totalKcalBurned,
+    viewedDay,
+    isToday,
   ];
 }
