@@ -36,6 +36,10 @@ Everything from OpenNutriTracker 2.7.0, plus:
   the full weight log, water, fasting sessions, recipes, custom foods, favourites, photos, the body
   profile from the first-time setup and your preferences (theme, units, food databases, display
   options, day start). Importing merges by entry, so nothing is overwritten wholesale.
+- **Photo quick add** — in **Quick add**, take a photo of your meal or pick one from the gallery;
+  it becomes the entry's thumbnail, and with a photo the title is optional — photo, calories, done.
+- **Your profile, your name** — the Profile tab and title show your profile's name and picture once
+  you set them, instead of "You" and a generic icon.
 - **Swipe to delete** — swipe a logged food left and confirm. Replaces dragging it onto the trash bar.
 - **Move between meals** — long-press a food and drag it onto Breakfast, Lunch, Dinner or Snack.
   The target section lights up, and the page scrolls while you hold the food near the top or bottom.
@@ -46,6 +50,8 @@ Everything from OpenNutriTracker 2.7.0, plus:
   pre-filled with what you logged: live calories, macros and nutrients, unit, a meal picker and
   **Save changes**. The day's totals adjust by the difference.
 - In the Diary, **Copy to today** for past days now lives in each food's ⋮ menu, so long-press is free for dragging.
+- **Made for ONT+** — Report error opens an issue here on GitHub, Rate stars this repository, and
+  Share sends the ONT+ releases link.
 - **Smoother** — Home and the Diary update in place after you add, edit or delete something, without
   a loading flash or losing your scroll position; food photos are decoded at the size they are shown,
   so lists scroll more smoothly and use far less memory.
