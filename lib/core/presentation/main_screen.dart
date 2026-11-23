@@ -4,7 +4,9 @@ import 'package:opennutritracker/core/presentation/widgets/add_item_bottom_sheet
 import 'package:opennutritracker/core/presentation/widgets/demo_mode_banner.dart';
 import 'package:opennutritracker/core/styles/app_palette.dart';
 import 'package:opennutritracker/core/utils/health_rationale_service.dart';
+import 'package:opennutritracker/core/presentation/widgets/active_profile_builder.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
 import 'package:opennutritracker/core/utils/meal_type_suggester.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
@@ -112,7 +114,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       const HomeAppbar(),
       MainAppbar(title: S.of(context).diaryLabel, iconData: Icons.book),
       MainAppbar(title: S.of(context).trendsLabel, iconData: Icons.insights),
-      MainAppbar(title: S.of(context).youLabel, iconData: Icons.account_circle),
+      const _ProfileAppbar(),
     ];
     super.didChangeDependencies();
   }
@@ -184,15 +186,24 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               palette: palette,
               onTap: _setPage,
             ),
-            _NavItem(
-              id: 'nav-you',
-              icon: Icons.account_circle_outlined,
-              selectedIcon: Icons.account_circle_rounded,
-              label: S.of(context).youLabel,
-              index: 3,
-              selectedIndex: _selectedPageIndex,
-              palette: palette,
-              onTap: _setPage,
+            // The profile's own name and picture once set; "You" and the
+            // generic icon for the unnamed default profile.
+            ActiveProfileBuilder(
+              builder: (context, profile) => _NavItem(
+                id: 'nav-you',
+                icon: Icons.account_circle_outlined,
+                selectedIcon: Icons.account_circle_rounded,
+                leading: profile?.imagePath == null
+                    ? null
+                    : ProfileAvatar(profile: profile!, radius: 13),
+                label:
+                    ActiveProfileBuilder.nameOf(profile) ??
+                    S.of(context).youLabel,
+                index: 3,
+                selectedIndex: _selectedPageIndex,
+                palette: palette,
+                onTap: _setPage,
+              ),
             ),
           ],
         ),
@@ -233,10 +244,34 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   }
 }
 
+/// The Profile tab's title: the profile's name and picture once set.
+class _ProfileAppbar extends StatelessWidget implements PreferredSizeWidget {
+  const _ProfileAppbar();
+
+  @override
+  Widget build(BuildContext context) {
+    return ActiveProfileBuilder(
+      builder: (context, profile) => MainAppbar(
+        title: ActiveProfileBuilder.nameOf(profile) ?? S.of(context).youLabel,
+        iconData: Icons.account_circle,
+        leading: profile?.imagePath == null
+            ? null
+            : ProfileAvatar(profile: profile!, radius: 18),
+      ),
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
 class _NavItem extends StatelessWidget {
   final String id;
   final IconData icon;
   final IconData selectedIcon;
+
+  /// Shown in place of the icon, e.g. the profile's picture.
+  final Widget? leading;
   final String label;
   final int index;
   final int selectedIndex;
@@ -247,6 +282,7 @@ class _NavItem extends StatelessWidget {
     required this.id,
     required this.icon,
     required this.selectedIcon,
+    this.leading,
     required this.label,
     required this.index,
     required this.selectedIndex,
@@ -271,10 +307,26 @@ class _NavItem extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(selected ? selectedIcon : icon, color: color, size: 26),
+                if (leading == null)
+                  Icon(selected ? selectedIcon : icon, color: color, size: 26)
+                else
+                  // A ring in the tab colour marks the picture as selected.
+                  Container(
+                    padding: const EdgeInsets.all(1.5),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: selected ? color : Colors.transparent,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: leading,
+                  ),
                 const SizedBox(height: 3),
                 Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: Theme.of(
                     context,
                   ).textTheme.labelSmall?.copyWith(color: color),

@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/utils/custom_text_input_formatter.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
@@ -14,6 +17,7 @@ import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/core/utils/sheet_bottom_inset.dart';
 import 'package:opennutritracker/core/utils/tracked_day_lock.dart';
+import 'package:opennutritracker/core/utils/user_image_storage.dart';
 import 'package:opennutritracker/features/add_meal/presentation/log_tray.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
@@ -65,6 +69,23 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
 
   bool _saving = false;
 
+  /// The entry's food id, fixed up front: an optional photo is stored under
+  /// it, as custom foods store theirs.
+  final String _mealCode = IdGenerator.getUniqueID();
+
+  /// The photo taken or picked for this entry, relative to the app's image
+  /// folder; null without one.
+  String? _photoPath;
+
+  /// [_photoPath] resolved once, so the preview does not reload (and
+  /// flicker) on every keystroke.
+  String? _photoFile;
+  bool _pickingPhoto = false;
+
+  /// Set once the entry is logged or listed; a photo of an entry that was
+  /// not is removed when the sheet closes.
+  bool _photoKept = false;
+
   @override
   void initState() {
     super.initState();
@@ -77,6 +98,10 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
 
   @override
   void dispose() {
+    final photo = _photoPath;
+    if (photo != null && !_photoKept) {
+      UserImageStorage.delete(photo);
+    }
     widget.logTray?.removeListener(_onTrayChanged);
     _titleController.removeListener(_onRequiredFieldChanged);
     _energyController.removeListener(_onRequiredFieldChanged);
@@ -102,8 +127,51 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
 
   bool get _canSubmit {
     final energy = _parsed(_energyController);
-    final hasTitle = _titleController.text.trim().isNotEmpty;
-    return !_saving && hasTitle && energy != null && energy > 0;
+    // With a photo the title is optional: snap, type the calories, done.
+    final hasTitle =
+        _titleController.text.trim().isNotEmpty || _photoPath != null;
+    return !_saving &&
+        !_pickingPhoto &&
+        hasTitle &&
+        energy != null &&
+        energy > 0;
+  }
+
+  Future<void> _pickPhoto(ImageSource source) async {
+    setState(() => _pickingPhoto = true);
+    try {
+      final picked = await ImagePicker().pickImage(source: source);
+      if (picked == null) return;
+      // Compressed and stored like a custom food's photo, under this
+      // entry's food id, so a retake replaces it in place.
+      final relative = await UserImageStorage.importFrom(
+        kind: UserImageKind.meal,
+        ownerId: _mealCode,
+        sourcePath: picked.path,
+      );
+      final file = await UserImageStorage.absolutePath(relative);
+      FileImage(File(file)).evict();
+      if (mounted) {
+        setState(() {
+          _photoPath = relative;
+          _photoFile = file;
+        });
+      }
+    } catch (e, st) {
+      _log.warning('Quick Add photo failed', e, st);
+    } finally {
+      if (mounted) setState(() => _pickingPhoto = false);
+    }
+  }
+
+  Future<void> _removePhoto() async {
+    final photo = _photoPath;
+    if (photo == null) return;
+    setState(() {
+      _photoPath = null;
+      _photoFile = null;
+    });
+    await UserImageStorage.delete(photo);
   }
 
   /// Whether the main button adds to the list rather than logging.
@@ -122,7 +190,8 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
     final carbs = _parsed(_carbsController);
     final fat = _parsed(_fatController);
     final protein = _parsed(_proteinController);
-    final title = _titleController.text.trim();
+    final typed = _titleController.text.trim();
+    final title = typed.isNotEmpty ? typed : S.of(context).quickAddDefaultName;
 
     try {
       final intake = _buildIntake(
@@ -136,6 +205,7 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
       // Asked again, not taken from the press: a food that reached the list
       // since must not be left behind by logging on its own.
       if (logTray != null && (toList || _addsToList)) {
+        _photoKept = true;
         logTray.add(
           LogTrayItem(
             meal: intake.meal,
@@ -158,6 +228,7 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
         if (mounted) setState(() => _saving = false);
         return;
       }
+      _photoKept = true;
 
       locator<HomeBloc>().add(const LoadItemsEvent());
       locator<DiaryBloc>().add(const LoadDiaryYearEvent());
@@ -170,15 +241,11 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
       // removes every route (including this sheet's), so reading from
       // context afterwards would be looking up a deactivated widget.
       final addedMessage = S.of(context).quickAddAddedSnack(mealTypeLabel);
-      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-        NavigationOptions.mainRoute,
-        (route) => false,
-      );
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text(addedMessage),
-        ),
-      );
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).pushNamedAndRemoveUntil(NavigationOptions.mainRoute, (route) => false);
+      scaffoldMessenger.showSnackBar(SnackBar(content: Text(addedMessage)));
     } catch (e, st) {
       _log.severe('Quick Add save failed', e, st);
       Sentry.captureException(e, stackTrace: st);
@@ -206,7 +273,7 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
       fiber100: null,
     );
     final meal = MealEntity(
-      code: IdGenerator.getUniqueID(),
+      code: _mealCode,
       name: title,
       url: null,
       mealQuantity: '100',
@@ -216,6 +283,7 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
       servingSize: '',
       nutriments: nutriments,
       source: MealSourceEntity.custom,
+      localImagePath: _photoPath,
     );
     return IntakeEntity(
       id: IdGenerator.getUniqueID(),
@@ -269,9 +337,7 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
     final s = S.of(context);
 
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: sheetBottomInset(context),
-      ),
+      padding: EdgeInsets.only(bottom: sheetBottomInset(context)),
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
         child: Column(
@@ -286,18 +352,21 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
                 textAlign: TextAlign.center,
               ),
             ),
+            _buildPhotoRow(context),
             _field(
               controller: _titleController,
               identifier: 'quick-add-title',
               label: s.quickAddTitleHint,
-              isRequired: true,
+              isRequired: _photoPath == null,
               numeric: false,
               autofocus: true,
             ),
             _field(
               controller: _energyController,
               identifier: 'quick-add-energy',
-              label: usesKj ? s.quickAddEnergyLabelKj : s.quickAddEnergyLabelKcal,
+              label: usesKj
+                  ? s.quickAddEnergyLabelKj
+                  : s.quickAddEnergyLabelKcal,
               isRequired: true,
               numeric: true,
             ),
@@ -356,6 +425,84 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
     );
   }
 
+  /// Take or choose a photo of the meal; once set, a thumbnail with a way
+  /// to remove it.
+  Widget _buildPhotoRow(BuildContext context) {
+    final s = S.of(context);
+    final photo = _photoPath;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          if (photo != null) ...[
+            Semantics(
+              identifier: 'quick-add-photo-preview',
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: SizedBox(
+                      width: 56,
+                      height: 56,
+                      child: _photoFile == null
+                          ? const SizedBox.shrink()
+                          : Image.file(
+                              File(_photoFile!),
+                              fit: BoxFit.cover,
+                              cacheWidth: 168,
+                            ),
+                    ),
+                  ),
+                  Positioned(
+                    top: -10,
+                    right: -10,
+                    child: IconButton.filledTonal(
+                      visualDensity: VisualDensity.compact,
+                      iconSize: 16,
+                      tooltip: s.mealImageRemove,
+                      onPressed: _removePhoto,
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+          ],
+          Expanded(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                Semantics(
+                  identifier: 'quick-add-take-photo',
+                  child: OutlinedButton.icon(
+                    onPressed: _pickingPhoto
+                        ? null
+                        : () => _pickPhoto(ImageSource.camera),
+                    icon: const Icon(Icons.photo_camera_outlined),
+                    label: Text(s.mealImageTakePhoto),
+                  ),
+                ),
+                Semantics(
+                  identifier: 'quick-add-choose-photo',
+                  child: OutlinedButton.icon(
+                    onPressed: _pickingPhoto
+                        ? null
+                        : () => _pickPhoto(ImageSource.gallery),
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: Text(s.mealImagePickFromGallery),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _field({
     required TextEditingController controller,
     required String identifier,
@@ -374,7 +521,9 @@ class _QuickAddBottomSheetState extends State<QuickAddBottomSheet> {
           keyboardType: numeric
               ? const TextInputType.numberWithOptions(decimal: true)
               : TextInputType.text,
-          inputFormatters: numeric ? CustomTextInputFormatter.doubleOnly() : null,
+          inputFormatters: numeric
+              ? CustomTextInputFormatter.doubleOnly()
+              : null,
           decoration: InputDecoration(
             labelText: isRequired ? '$label *' : label,
             border: const OutlineInputBorder(),

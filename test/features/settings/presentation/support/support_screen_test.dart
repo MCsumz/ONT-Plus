@@ -84,7 +84,7 @@ void main() {
   }
 
   group('layout', () {
-    testWidgets('shows the header, three groups and seven ways in order', (
+    testWidgets('shows the header, two groups and six ways in order', (
       tester,
     ) async {
       final labels = [
@@ -96,8 +96,6 @@ void main() {
         l10nEn.supportTranslateTitle,
         l10nEn.supportReportTitle,
         l10nEn.supportCodeTitle,
-        l10nEn.supportGroupMoney,
-        l10nEn.supportTipTitle,
       ];
       // Tall enough that the whole page is laid out at once.
       tester.view.physicalSize = const Size(1080, 4000);
@@ -112,7 +110,6 @@ void main() {
         Icons.translate_rounded,
         Icons.lightbulb_outline_rounded,
         Icons.code_rounded,
-        Icons.volunteer_activism_rounded,
       ];
       double top(Finder f) => tester.getTopLeft(f).dy;
       for (var i = 1; i < labels.length; i++) {
@@ -139,7 +136,6 @@ void main() {
         l10nEn.supportTranslateSubtitle,
         l10nEn.supportReportSubtitle,
         l10nEn.supportCodeSubtitle,
-        l10nEn.supportTipSubtitle,
       ]) {
         expect(find.text(subtitle), findsOneWidget, reason: subtitle);
       }
@@ -174,29 +170,21 @@ void main() {
       ]);
     });
 
-    testWidgets('Rate opens the Play listing on Android', (tester) async {
-      debugDefaultTargetPlatformOverride = TargetPlatform.android;
-      await pumpPage(tester);
+    // ONT+ is not in the stores: rating it means starring its repository,
+    // on either platform.
+    for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+      testWidgets('Rate opens the ONT+ repository on ${platform.name}', (
+        tester,
+      ) async {
+        debugDefaultTargetPlatformOverride = platform;
+        await pumpPage(tester);
 
-      await tapRow(tester, 'support-way-rate');
+        await tapRow(tester, 'support-way-rate');
 
-      expect(opened, [
-        'https://play.google.com/store/apps/details?id=com.opennutritracker.ont.opennutritracker',
-      ]);
-      debugDefaultTargetPlatformOverride = null;
-    });
-
-    testWidgets('Rate opens the write-a-review form on iOS', (tester) async {
-      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-      await pumpPage(tester);
-
-      await tapRow(tester, 'support-way-rate');
-
-      expect(opened, [
-        'https://apps.apple.com/app/id6451490901?action=write-review',
-      ]);
-      debugDefaultTargetPlatformOverride = null;
-    });
+        expect(opened, ['https://github.com/MCsumz/ONT-Plus']);
+        debugDefaultTargetPlatformOverride = null;
+      });
+    }
 
     testWidgets('a link that cannot open says so', (tester) async {
       openResult = false;
@@ -207,7 +195,7 @@ void main() {
       expect(find.text(l10nEn.errorOpeningBrowser), findsOneWidget);
     });
 
-    testWidgets('Share sends the description and both store links', (
+    testWidgets('Share sends the description and the ONT+ releases link', (
       tester,
     ) async {
       await pumpPage(tester);
@@ -216,199 +204,22 @@ void main() {
 
       final params = sharePlatform.calls.single;
       expect(params.text, startsWith(l10nEn.appDescription));
-      expect(params.text, contains(AppConst.appStoreUrl));
-      expect(params.text, contains(AppConst.playStoreUrl));
+      expect(params.text, contains(AppConst.releasesUrl));
+      expect(params.text, isNot(contains(AppConst.playStoreUrl)));
       expect(params.sharePositionOrigin, isNotNull);
       expect(opened, isEmpty);
     });
   });
 
-  group('tip states', () {
-    Future<void> scrollToTips(WidgetTester tester) async {
-      await tester.scrollUntilVisible(find.text(l10nEn.supportTipTitle), 200);
-      await tester.drag(find.byType(ListView), const Offset(0, -400));
-      await tester.pumpAndSettle();
-    }
+  // The tip jar sells through the original app's store listing, which a
+  // sideloaded ONT+ cannot reach, so it is not offered.
+  testWidgets('the tip jar is not offered', (tester) async {
+    tester.view.physicalSize = const Size(1080, 4000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pumpPage(tester);
 
-    testWidgets('loading shows a spinner and no chips', (tester) async {
-      store.queryGate = Completer<void>();
-      // The spinner never settles, so the page is laid out whole instead of
-      // scrolled to.
-      tester.view.physicalSize = const Size(1080, 4000);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
-      await pumpPage(tester, settle: false);
-      await tester.pump();
-
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(byId('support-tip-small'), findsNothing);
-      expect(byId('support-tip-retry'), findsNothing);
-
-      store.queryGate!.complete();
-      await tester.pumpAndSettle();
-      expect(find.byType(CircularProgressIndicator), findsNothing);
-    });
-
-    testWidgets('loaded shows three chips, cheapest first, with store prices', (
-      tester,
-    ) async {
-      await pumpPage(tester);
-      await scrollToTips(tester);
-
-      expect(find.byType(CircularProgressIndicator), findsNothing);
-      for (final id in [
-        'support-tip-small',
-        'support-tip-medium',
-        'support-tip-large',
-      ]) {
-        expect(byId(id), findsOneWidget, reason: id);
-      }
-      final small = tester.getCenter(byId('support-tip-small'));
-      final medium = tester.getCenter(byId('support-tip-medium'));
-      final large = tester.getCenter(byId('support-tip-large'));
-      expect(small.dx, lessThan(medium.dx));
-      expect(medium.dx, lessThan(large.dx));
-      expect(find.text(l10nEn.supportTipSmall), findsOneWidget);
-      expect(find.text('€1.99'), findsOneWidget);
-      expect(find.text('€4.99'), findsOneWidget);
-      expect(find.text('€9.99'), findsOneWidget);
-      expect(find.text(l10nEn.supportTipLeft), findsNothing);
-    });
-
-    testWidgets('a partial load shows only the tips that loaded', (
-      tester,
-    ) async {
-      store.products = tipProducts(only: {'tip_small', 'tip_large'});
-      await pumpPage(tester);
-      await scrollToTips(tester);
-
-      expect(byId('support-tip-small'), findsOneWidget);
-      expect(byId('support-tip-medium'), findsNothing);
-      expect(byId('support-tip-large'), findsOneWidget);
-    });
-
-    testWidgets('failed replaces the chips with the notice and Retry', (
-      tester,
-    ) async {
-      store.available = false;
-      await pumpPage(tester);
-      await scrollToTips(tester);
-
-      expect(find.text(l10nEn.supportTipLoadFailed), findsOneWidget);
-      expect(byId('support-tip-retry'), findsOneWidget);
-      expect(byId('support-tip-small'), findsNothing);
-      // The other ways are unaffected.
-      expect(byId('support-way-code'), findsOneWidget);
-    });
-
-    testWidgets('Retry loads the tips again', (tester) async {
-      store.products = [];
-      await pumpPage(tester);
-      await scrollToTips(tester);
-      expect(byId('support-tip-retry'), findsOneWidget);
-
-      store.products = tipProducts();
-      await tester.tap(find.text(l10nEn.retryLabel));
-      await tester.pumpAndSettle();
-
-      expect(byId('support-tip-retry'), findsNothing);
-      expect(byId('support-tip-medium'), findsOneWidget);
-      expect(store.queryCalls, 2);
-    });
-
-    testWidgets('a chip opens the store sheet for its tip', (tester) async {
-      await pumpPage(tester);
-      await scrollToTips(tester);
-
-      await tester.tap(byId('support-tip-large'));
-      await tester.pumpAndSettle();
-
-      expect(store.bought.single.id, 'tip_large');
-    });
-
-    testWidgets('purchased thanks, then shows the line under the chips', (
-      tester,
-    ) async {
-      await pumpPage(tester);
-      await scrollToTips(tester);
-
-      store.emit([tipPurchase('tip_small', PurchaseStatus.purchased)]);
-      await tester.pumpAndSettle();
-
-      expect(find.text(l10nEn.supportTipThanksTitle), findsOneWidget);
-      expect(
-        find.text(l10nEn.supportTipThanksBody(l10nEn.supportTipSmall, '€1.99')),
-        findsOneWidget,
-      );
-
-      await tester.tap(find.text(l10nEn.dialogOKLabel));
-      await tester.pumpAndSettle();
-
-      expect(find.text(l10nEn.supportTipThanksTitle), findsNothing);
-      expect(find.text(l10nEn.supportTipLeft), findsOneWidget);
-      // The chips stay.
-      expect(byId('support-tip-small'), findsOneWidget);
-      // Text only: no icon beside the line.
-      final line = find.text(l10nEn.supportTipLeft);
-      expect(
-        find.descendant(
-          of: find.ancestor(of: line, matching: find.byType(Column)).first,
-          matching: find.byIcon(Icons.favorite_rounded),
-        ),
-        findsNothing,
-      );
-      expect(config.hasLeftTip, isTrue);
-    });
-
-    testWidgets('a tip left earlier shows the line on opening', (tester) async {
-      config.hasLeftTip = true;
-      await pumpPage(tester);
-      await scrollToTips(tester);
-
-      expect(find.text(l10nEn.supportTipLeft), findsOneWidget);
-    });
-
-    testWidgets('pending says the payment is waiting and does not thank', (
-      tester,
-    ) async {
-      await pumpPage(tester);
-      await scrollToTips(tester);
-
-      store.emit([tipPurchase('tip_small', PurchaseStatus.pending)]);
-      await tester.pumpAndSettle();
-
-      expect(find.text(l10nEn.supportTipPending), findsOneWidget);
-      expect(find.text(l10nEn.supportTipThanksTitle), findsNothing);
-      expect(find.text(l10nEn.supportTipLeft), findsNothing);
-    });
-
-    testWidgets('an error says the tip did not go through', (tester) async {
-      await pumpPage(tester);
-      await scrollToTips(tester);
-
-      store.emit([tipPurchase('tip_small', PurchaseStatus.error)]);
-      await tester.pumpAndSettle();
-
-      expect(find.text(l10nEn.supportTipFailed), findsOneWidget);
-      expect(find.text(l10nEn.supportTipLeft), findsNothing);
-    });
-
-    testWidgets('a cancel shows nothing', (tester) async {
-      await pumpPage(tester);
-      await scrollToTips(tester);
-
-      store.emit([
-        tipPurchase(
-          'tip_small',
-          PurchaseStatus.canceled,
-          pendingComplete: false,
-        ),
-      ]);
-      await tester.pumpAndSettle();
-
-      expect(find.byType(SnackBar), findsNothing);
-      expect(find.byType(AlertDialog), findsNothing);
-      expect(find.text(l10nEn.supportTipLeft), findsNothing);
-    });
+    expect(find.text(l10nEn.supportGroupMoney), findsNothing);
+    expect(find.text(l10nEn.supportTipTitle), findsNothing);
   });
 }

@@ -61,10 +61,8 @@ class _SupportScreenState extends State<SupportScreen> {
 
   /// iOS opens the App Store's write-a-review form. Play has no documented
   /// link to its review form, so Android opens the listing (#1531).
-  void _rate() {
-    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
-    _open(isIOS ? AppConst.appStoreReviewUrl : AppConst.playStoreUrl);
-  }
+  /// ONT+ is not in the stores: rating it means starring its repository.
+  void _rate() => _open(AppConst.sourceCodeUrl);
 
   Future<void> _share() async {
     final l10n = S.of(context);
@@ -73,10 +71,9 @@ class _SupportScreenState extends State<SupportScreen> {
     final origin = box != null && box.hasSize
         ? box.localToGlobal(Offset.zero) & box.size
         : null;
-    final links = l10n.supportShareLinks(
-      AppConst.appStoreUrl,
-      AppConst.playStoreUrl,
-    );
+    // ONT+ is shared by its GitHub releases, where both the APK and the
+    // IPA are.
+    final links = l10n.supportShareOntPlusLink(AppConst.releasesUrl);
     await (widget.sharePlus ?? SharePlus.instance).share(
       ShareParams(
         text: '${l10n.appDescription}\n\n$links',
@@ -232,15 +229,8 @@ class _SupportScreenState extends State<SupportScreen> {
               ),
             ],
           ),
-          const SizedBox(height: Dimens.spacing20),
-          SettingsCategoryHeader(
-            palette: palette,
-            label: l10n.supportGroupMoney,
-          ),
-          SettingsGroup(
-            palette: palette,
-            tiles: [_TipBlock(palette: palette, tipJar: _tipJar)],
-          ),
+          // The tip jar sells through the original app's store listing,
+          // which a sideloaded ONT+ cannot reach, so it is not offered.
         ],
       ),
     );
@@ -256,6 +246,8 @@ String tipName(S l10n, TipSize size) => switch (size) {
 
 /// "Leave a tip": a heading row that only labels, with the tip jar's state
 /// underneath.
+// Kept for a store listing of ONT+'s own; not shown in this build.
+// ignore: unused_element
 class _TipBlock extends StatelessWidget {
   final AppPalette palette;
   final TipJarCubit tipJar;

@@ -18,6 +18,9 @@ class AppConst {
   static const plusAuthorUrl = "https://github.com/MCsumz";
   static const plusAuthorHandle = "github.com/MCsumz";
 
+  /// Where ONT+ is downloaded: the newest release on GitHub.
+  static const releasesUrl = "$sourceCodeUrl/releases/latest";
+
   // Support page links (#1536). Every one opens outside the app.
   static const appStoreUrl = "https://apps.apple.com/app/id6451490901";
 

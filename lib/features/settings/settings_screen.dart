@@ -44,7 +44,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:opennutritracker/core/utils/safe_url_launcher.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/diary_day_boundary_dialog.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/kcal_adjustment_dialog.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/kcal_goal_info_screen.dart';
@@ -1420,18 +1419,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// ONT+ errors go to its GitHub issues, where they can be followed up,
+  /// not to the original app's developer by email.
   Future<void> _reportError(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final errorText = S.of(context).errorOpeningEmail;
-
-    // Cannot open email app: show error snackbar.
-    if (await tryLaunchExternalUrl(
-      "mailto:${AppConst.reportErrorEmail}?subject=Report_Error",
-      mode: LaunchMode.platformDefault,
-    )) {
-      return;
-    }
-    messenger.showSnackBar(SnackBar(content: Text(errorText)));
+    openUrlOrShowError(context, AppConst.newIssueUrl);
   }
 
   void _showPrivacyDialog(

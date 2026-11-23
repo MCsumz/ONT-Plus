@@ -1044,7 +1044,7 @@
   "recipesFilterAllLabel": "All",
   "recipesLabel": "Recipes",
   "recipesLoadErrorLabel": "Could not load recipes. Try again later.",
-  "reportErrorDialogText": "Do you want to report an error to the developer?",
+  "reportErrorDialogText": "Report an error in ONT+? This opens a new issue on GitHub.",
   "retryLabel": "Retry",
   "saturatedFatLabel": "saturated fat",
   "scanProductLabel": "Scan Product",
@@ -1533,12 +1533,12 @@
   "supportGroupSpreadWord": "Spread the word",
   "supportGroupSkills": "Give your skills",
   "supportGroupMoney": "Give money",
-  "supportRateTitle": "Rate the app",
-  "supportRateSubtitle": "A rating helps others find OpenNutriTracker.",
+  "supportRateTitle": "Rate ONT+",
+  "supportRateSubtitle": "Leave a star on GitHub — it helps others find ONT+.",
   "supportShareTitle": "Share with a friend",
   "supportShareSubtitle": "Send a link through any app.",
   "supportStarTitle": "Star on GitHub",
-  "supportStarSubtitle": "Show the project some love where developers look.",
+  "supportStarSubtitle": "Show ONT+ some love where developers look.",
   "supportTranslateTitle": "Help translate",
   "supportTranslateSubtitle": "Translate in your browser on Weblate. No coding needed.",
   "supportReportTitle": "Report a bug or idea",
@@ -1686,5 +1686,9 @@
     "placeholders": { "author": { "type": "String" } }
   },
   "basedOnUpstreamLine": "Based on OpenNutriTracker by Simon Oppowa and contributors",
-  "upstreamProjectLabel": "Original OpenNutriTracker project"
+  "upstreamProjectLabel": "Original OpenNutriTracker project",
+  "supportShareOntPlusLink": "Get ONT+ for Android and iPhone: {releasesUrl}",
+  "@supportShareOntPlusLink": {
+    "placeholders": { "releasesUrl": { "type": "String" } }
+  }
 }
