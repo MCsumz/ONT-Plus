@@ -37,7 +37,7 @@ Everything from OpenNutriTracker 2.7.0, plus:
   profile from the first-time setup and your preferences (theme, units, food databases, display
   options, day start). Importing merges by entry, so nothing is overwritten wholesale.
 - **Photo quick add** — in **Quick add**, take a photo of your meal or pick one from the gallery;
-  it becomes the entry's thumbnail, and with a photo the title is optional — photo, calories, done.
+  it becomes the entry's thumbnail and shows when you open the entry, and with a photo the title is optional — photo, calories, done.
 - **Pieces at a glance** — a food logged in servings shows the count on its row, e.g. *2 slices · 76 g*,
   not only the weight.
 - **Your profile, your name** — the Profile tab and title show your profile's name and picture once
