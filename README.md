@@ -12,6 +12,7 @@
 
 <p align="center">
   <a href="https://github.com/MCsumz/ONT-Plus/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/MCsumz/ONT-Plus?style=flat-square&color=22de5f" /></a>
+  <a href="https://github.com/MCsumz/ONT-Plus/actions/workflows/ont-plus-tests.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/MCsumz/ONT-Plus/ont-plus-tests.yml?branch=main&style=flat-square&label=tests" /></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPLv3-22de5f?style=flat-square" /></a>
   <img alt="Platform" src="https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey?style=flat-square" />
   <a href="https://github.com/simonoppowa/OpenNutriTracker"><img alt="Upstream" src="https://img.shields.io/badge/upstream-OpenNutriTracker%202.7.0-blue?style=flat-square" /></a>

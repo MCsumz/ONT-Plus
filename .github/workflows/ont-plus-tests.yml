@@ -1,0 +1,63 @@
+# ONT+ checks: the same steps as upstream's `linux-checks` job, on their own.
+#
+# The workflows inherited from OpenNutriTracker (store builds, releases,
+# Weblate, project boards, screenshots, policy snapshots) are switched off on
+# this fork, since they need upstream's secrets. Their files stay unchanged so
+# syncing with upstream keeps working.
+name: ONT+ tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ont-plus-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Flutter + cache packages
+        uses: ./.github/actions/setup-flutter-cache
+
+      - name: Setup Just
+        uses: taiki-e/install-action@just
+
+      # The tests never reach Sentry or Supabase, so stub values are enough
+      # for envied to generate env.g.dart.
+      - name: Generate stub .env
+        uses: ./.github/actions/write-env-file
+        with:
+          sentry_dns: https://stub@sentry.io/0
+          supabase_project_url: https://stub.supabase.co
+          supabase_project_anon_key: ci-stub
+
+      - name: Install Flutter packages
+        run: just install
+
+      - name: Generate localizations
+        run: just check_l10n
+
+      - name: Generate code (env.g.dart, Hive adapters, JSON serializers)
+        run: just build
+
+      - name: Static analysis
+        run: flutter analyze
+
+      - name: Run tests
+        run: just test
+
+      # Reruns the DST tests in a zone with transitions; in UTC they skip.
+      - name: Run the DST tests in Europe/Berlin
+        run: just test_dst
