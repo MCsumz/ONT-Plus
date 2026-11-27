@@ -5,6 +5,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:intl/intl.dart';
+import 'package:opennutritracker/features/meal_detail/presentation/bloc/meal_detail_bloc.dart';
+import 'package:opennutritracker/core/utils/serving_label_localizer.dart';
 import 'package:opennutritracker/core/utils/image_decode_size.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/app_card.dart';
@@ -103,6 +105,9 @@ class IntakeCard extends StatelessWidget {
                       MealValueUnitText(
                         value: intake.amount,
                         meal: intake.meal,
+                        // Logged in servings: the count first, "2 slices ·
+                        // 76 g", not only the weight.
+                        prefix: _servingsPrefix(s),
                         usesImperialUnits: usesImperialUnits,
                         textStyle: textTheme.bodySmall?.copyWith(color: palette.textMuted),
                       ),
@@ -188,6 +193,16 @@ class IntakeCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// "2 slices · " for an entry logged in servings; empty otherwise, or
+  /// for a named portion, whose weight a stored entry no longer knows.
+  String _servingsPrefix(S s) {
+    if (intake.unit != UnitDropdownItem.serving.toString()) return '';
+    final perServing = intake.meal.scalableServingQuantity;
+    if (perServing == null || perServing <= 0) return '';
+    final count = intake.amount / perServing;
+    return '${servingCountLabel(s, intake.meal.servingSize, count)} · ';
   }
 
   void onLongPressedItem(BuildContext context) {

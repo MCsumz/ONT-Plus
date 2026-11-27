@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:logging/logging.dart';
+import 'package:opennutritracker/core/utils/user_image_storage.dart';
 import 'package:opennutritracker/core/utils/image_decode_size.dart';
 import 'package:opennutritracker/core/data/dbo/intake_type_dbo.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
@@ -328,7 +331,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     final editing = _editingIntake;
     if (editing == null) return;
     final state = _mealDetailBloc.state;
-    final unchanged = quantityTextController.text == _initialQuantity &&
+    final unchanged =
+        quantityTextController.text == _initialQuantity &&
         state.selectedUnit == _initialUnit;
     Navigator.of(context).pop(
       LoggedIntakeEdit(
@@ -372,7 +376,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       child: SafeArea(
         child: Scaffold(
           backgroundColor:
-              (Theme.of(context).brightness == Brightness.dark ? AppPalette.dark : AppPalette.light).canvas,
+              (Theme.of(context).brightness == Brightness.dark
+                      ? AppPalette.dark
+                      : AppPalette.light)
+                  .canvas,
           body: BlocBuilder<MealDetailBloc, MealDetailState>(
             bloc: _mealDetailBloc,
             builder: (context, state) {
@@ -393,24 +400,24 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               return const Center(child: CircularProgressIndicator());
             },
           ),
-        bottomSheet: BlocSelector<MealDetailBloc, MealDetailState, String>(
-          bloc: _mealDetailBloc,
-          selector: (state) => state.selectedUnit,
-          builder: (context, selectedUnit) {
-            return MealDetailBottomSheet(
-              product: meal,
-              day: _day,
-              intakeTypeEntity: intakeTypeEntity,
-              selectedUnit: selectedUnit,
-              usesImperialUnits: _usesImperialUnits,
-              mealDetailBloc: _mealDetailBloc,
-              quantityTextController: quantityTextController,
-              onQuantityOrUnitChanged: onQuantityOrUnitChanged,
-              logTray: _logTray,
-              editMealType: _editingIntake?.type,
-              onSaveEdit: _editingIntake == null ? null : _onSaveEdit,
-            );
-          },
+          bottomSheet: BlocSelector<MealDetailBloc, MealDetailState, String>(
+            bloc: _mealDetailBloc,
+            selector: (state) => state.selectedUnit,
+            builder: (context, selectedUnit) {
+              return MealDetailBottomSheet(
+                product: meal,
+                day: _day,
+                intakeTypeEntity: intakeTypeEntity,
+                selectedUnit: selectedUnit,
+                usesImperialUnits: _usesImperialUnits,
+                mealDetailBloc: _mealDetailBloc,
+                quantityTextController: quantityTextController,
+                onQuantityOrUnitChanged: onQuantityOrUnitChanged,
+                logTray: _logTray,
+                editMealType: _editingIntake?.type,
+                onSaveEdit: _editingIntake == null ? null : _onSaveEdit,
+              );
+            },
           ),
         ),
       ),
@@ -451,10 +458,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               _showAppBarTitle || _editingIntake == null
                   ? meal.name ?? ''
                   : S.of(context).editLoggedEntryTitle,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w800),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -465,17 +471,17 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               // shown as the live selection instead, not counted twice.
               dayKcalConsumed: _editingIntake == null
                   ? dayKcalConsumed
-                  : (dayKcalConsumed - _editingIntake!.totalKcal)
-                      .clamp(0.0, double.infinity),
+                  : (dayKcalConsumed - _editingIntake!.totalKcal).clamp(
+                      0.0,
+                      double.infinity,
+                    ),
               dayKcalGoal: dayKcalGoal,
               currentSelectionKcal: totalKcal,
             ),
           ),
           flexibleSpace: FlexibleSpaceBar(
             background: Padding(
-              padding: EdgeInsets.only(
-                bottom: dayKcalGoal > 0 ? 68 : 0,
-              ),
+              padding: EdgeInsets.only(bottom: dayKcalGoal > 0 ? 68 : 0),
               child: MealTitleExpanded(
                 meal: meal,
                 usesImperialUnits: _usesImperialUnits,
@@ -489,24 +495,24 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             ),
             // Editing the food itself would log it anew; not from an entry.
             if (_editingIntake == null)
-            Semantics(
-              identifier: 'meal-detail-edit',
-              child: IconButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamed(
-                    NavigationOptions.editMealRoute,
-                    arguments: EditMealScreenArguments(
-                      _day,
-                      meal,
-                      intakeTypeEntity,
-                      _usesImperialUnits,
-                      logTray: _logTray,
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.edit_rounded),
+              Semantics(
+                identifier: 'meal-detail-edit',
+                child: IconButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed(
+                      NavigationOptions.editMealRoute,
+                      arguments: EditMealScreenArguments(
+                        _day,
+                        meal,
+                        intakeTypeEntity,
+                        _usesImperialUnits,
+                        logTray: _logTray,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.edit_rounded),
+                ),
               ),
-            ),
           ],
         ),
         SliverList(
@@ -515,30 +521,35 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(80),
-                child: GestureDetector(
-                  child: Hero(
-                    tag: ImageFullScreen.fullScreenHeroTag,
-                    child: CachedNetworkImage(
-                      width: 250,
-                      height: 250,
-                      memCacheWidth: decodeWidthFor(context, 250),
-                      cacheManager: locator<CacheManager>(),
-                      imageUrl: meal.mainImageUrl ?? "",
-                      fit: BoxFit.cover,
-                      placeholder: (context, string) => const MealPlaceholder(),
-                      errorWidget: (context, url, error) =>
-                          const MealPlaceholder(),
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pushNamed(
-                      NavigationOptions.imageFullScreenRoute,
-                      arguments: ImageFullScreenArguments(
-                        meal.mainImageUrl ?? "",
+                // A photo taken on the phone (Quick add, a custom food) is
+                // shown from the phone; others come from the food database.
+                child: meal.localImagePath != null
+                    ? _LocalMealPhoto(relativePath: meal.localImagePath!)
+                    : GestureDetector(
+                        child: Hero(
+                          tag: ImageFullScreen.fullScreenHeroTag,
+                          child: CachedNetworkImage(
+                            width: 250,
+                            height: 250,
+                            memCacheWidth: decodeWidthFor(context, 250),
+                            cacheManager: locator<CacheManager>(),
+                            imageUrl: meal.mainImageUrl ?? "",
+                            fit: BoxFit.cover,
+                            placeholder: (context, string) =>
+                                const MealPlaceholder(),
+                            errorWidget: (context, url, error) =>
+                                const MealPlaceholder(),
+                          ),
+                        ),
+                        onTap: () {
+                          Navigator.of(context).pushNamed(
+                            NavigationOptions.imageFullScreenRoute,
+                            arguments: ImageFullScreenArguments(
+                              meal.mainImageUrl ?? "",
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
             ),
             UnsplashCreditLine(imageUrl: meal.mainImageUrl),
@@ -554,9 +565,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                         meal.nutriments.energyKcal100 == null
                             ? missingNutrientPlaceholder
                             : EnergyDisplay.formatWithUnit(context, totalKcal),
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
+                        style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       MealValueUnitText(
@@ -564,8 +573,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                         meal: meal,
                         displayUnit:
                             selectedUnit == UnitDropdownItem.serving.toString()
-                                ? meal.servingUnit
-                                : selectedUnit,
+                            ? meal.servingUnit
+                            : selectedUnit,
                         usesImperialUnits: _usesImperialUnits,
                         textStyle: Theme.of(context).textTheme.bodyMedium,
                         prefix: ' / ',
@@ -585,9 +594,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                       ),
                       MealDetailMacroNutrients(
                         typeString: S.of(context).fatLabel,
-                        value: meal.nutriments.fat100 == null
-                            ? null
-                            : totalFat,
+                        value: meal.nutriments.fat100 == null ? null : totalFat,
                         color: palette.fat,
                       ),
                       MealDetailMacroNutrients(
@@ -682,10 +689,10 @@ class LoggedIntakeEdit {
   });
 
   Map<String, dynamic> toUpdateFields() => {
-        'amount': amount,
-        'unit': unit,
-        'type': IntakeTypeDBO.fromIntakeTypeEntity(type),
-      };
+    'amount': amount,
+    'unit': unit,
+    'type': IntakeTypeDBO.fromIntakeTypeEntity(type),
+  };
 }
 
 /// Opens [intake] in the food detail screen to change its amount, unit and
@@ -734,3 +741,38 @@ class MealDetailScreenArguments {
   });
 }
 
+/// A food's photo stored on the phone, at the detail screen's 250 pt size.
+class _LocalMealPhoto extends StatefulWidget {
+  final String relativePath;
+
+  const _LocalMealPhoto({required this.relativePath});
+
+  @override
+  State<_LocalMealPhoto> createState() => _LocalMealPhotoState();
+}
+
+class _LocalMealPhotoState extends State<_LocalMealPhoto> {
+  late final Future<String> _path = UserImageStorage.absolutePath(
+    widget.relativePath,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 250,
+      height: 250,
+      child: FutureBuilder<String>(
+        future: _path,
+        builder: (context, snapshot) => snapshot.hasData
+            ? Image.file(
+                File(snapshot.data!),
+                fit: BoxFit.cover,
+                cacheWidth: decodeWidthFor(context, 250),
+                errorBuilder: (context, error, stack) =>
+                    const MealPlaceholder(),
+              )
+            : const MealPlaceholder(),
+      ),
+    );
+  }
+}

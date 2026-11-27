@@ -69,4 +69,32 @@ void main() {
       expect(imperialServingLabel(s, '100 g/ml'), '100 g/ml');
     });
   });
+
+  group("servingCountLabel (a logged food's row)", () {
+    final en = lookupS(const Locale('en'));
+
+    test("counts in the serving's own unit", () {
+      expect(servingCountLabel(en, '1 slice (38 g)', 2), '2 slices');
+      expect(servingCountLabel(en, '1 piece (25 g)', 1), '1 piece');
+    });
+
+    test('a fraction shows its decimals, a whole number none', () {
+      expect(servingCountLabel(en, '1 piece (25 g)', 0.5), '0.5 pieces');
+      expect(servingCountLabel(en, '1 cup (240 ml)', 3), '3 cups');
+    });
+
+    test('a serving with no single unit reads as servings', () {
+      expect(servingCountLabel(en, '30 g', 2), '2 servings');
+      expect(servingCountLabel(en, null, 1), '1 serving');
+      expect(servingCountLabel(en, '2 slices (60 g)', 2), '2 servings');
+    });
+
+    test('follows the language', () {
+      final de = lookupS(const Locale('de'));
+      expect(
+        servingCountLabel(de, '1 slice (38 g)', 2),
+        isNot(contains('slices')),
+      );
+    });
+  });
 }

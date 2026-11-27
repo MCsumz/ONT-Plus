@@ -108,3 +108,19 @@ String? _localizedUnit(S s, String unit, num count) {
       return null;
   }
 }
+
+/// How many servings of a food [count] is, in the words of its serving:
+/// "2 slices" for a serving described as "1 slice (38 g)", "0.5 pieces",
+/// and "2 servings" when the description names no single unit. Shown on a
+/// logged food's row beside its weight.
+String servingCountLabel(S s, String? servingSize, double count) {
+  final amount = _formatAmount(count);
+  final match = _servingLabelPattern.firstMatch(servingSize?.trim() ?? '');
+  if (match != null &&
+      num.tryParse(match.group(1)!.replaceAll(',', '.')) == 1) {
+    final word = match.group(2)!.trim().toLowerCase();
+    final localized = _localizedUnit(s, word, count);
+    if (localized != null) return '$amount $localized';
+  }
+  return '$amount ${s.measureUnitServing(count)}';
+}

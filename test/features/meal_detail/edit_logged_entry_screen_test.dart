@@ -196,6 +196,20 @@ void main() {
     expect(edit.type, IntakeTypeEntity.breakfast);
   });
 
+  testWidgets('a whole amount opens as "80", decimals only when needed', (
+    tester,
+  ) async {
+    await openEditor(tester, _logged(amount: 80, unit: 'g'));
+    expect(quantityText(tester), '80', reason: 'not 80.00');
+  });
+
+  testWidgets('a fractional amount keeps only the decimals it has', (
+    tester,
+  ) async {
+    await openEditor(tester, _logged(amount: 80.5, unit: 'g'));
+    expect(quantityText(tester), '80.5', reason: 'not 80.50');
+  });
+
   testWidgets('a unit the food no longer offers falls back to grams',
       (tester) async {
     await openEditor(tester, _logged(amount: 45, unit: 'serving#2'));
