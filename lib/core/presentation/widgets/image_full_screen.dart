@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -15,12 +17,14 @@ class ImageFullScreen extends StatefulWidget {
 
 class _ImageFullScreenState extends State<ImageFullScreen> {
   late String imageUrl;
+  String? localPath;
 
   @override
   void didChangeDependencies() {
     final args =
         ModalRoute.of(context)?.settings.arguments as ImageFullScreenArguments;
     imageUrl = args.imageUrl;
+    localPath = args.localPath;
     super.didChangeDependencies();
   }
 
@@ -32,15 +36,26 @@ class _ImageFullScreenState extends State<ImageFullScreen> {
       body: InteractiveViewer(
         child: Hero(
           tag: ImageFullScreen.fullScreenHeroTag,
-          child: CachedNetworkImage(
-            width: double.infinity,
-            height: double.infinity,
-            cacheManager: locator<CacheManager>(),
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            placeholder: (context, string) => const MealPlaceholder(),
-            errorWidget: (context, url, error) => const MealPlaceholder(),
-          ),
+          // A photo taken on the phone is shown whole, to zoom into; a
+          // database picture fills the screen as before.
+          child: localPath != null
+              ? Image.file(
+                  File(localPath!),
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stack) =>
+                      const MealPlaceholder(),
+                )
+              : CachedNetworkImage(
+                  width: double.infinity,
+                  height: double.infinity,
+                  cacheManager: locator<CacheManager>(),
+                  imageUrl: imageUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (context, string) => const MealPlaceholder(),
+                  errorWidget: (context, url, error) => const MealPlaceholder(),
+                ),
         ),
       ),
     );
@@ -50,5 +65,9 @@ class _ImageFullScreenState extends State<ImageFullScreen> {
 class ImageFullScreenArguments {
   final String imageUrl;
 
-  ImageFullScreenArguments(this.imageUrl);
+  /// A photo stored on the phone, as an absolute path; shown instead of
+  /// [imageUrl] when set.
+  final String? localPath;
+
+  ImageFullScreenArguments(this.imageUrl, {this.localPath});
 }

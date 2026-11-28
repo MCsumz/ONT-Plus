@@ -763,15 +763,32 @@ class _LocalMealPhotoState extends State<_LocalMealPhoto> {
       height: 250,
       child: FutureBuilder<String>(
         future: _path,
-        builder: (context, snapshot) => snapshot.hasData
-            ? Image.file(
-                File(snapshot.data!),
-                fit: BoxFit.cover,
-                cacheWidth: decodeWidthFor(context, 250),
-                errorBuilder: (context, error, stack) =>
-                    const MealPlaceholder(),
-              )
-            : const MealPlaceholder(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const MealPlaceholder();
+          final path = snapshot.data!;
+          // Tap to open it full screen and zoom in, as with database
+          // pictures.
+          return Semantics(
+            identifier: 'meal-detail-local-photo',
+            button: true,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pushNamed(
+                NavigationOptions.imageFullScreenRoute,
+                arguments: ImageFullScreenArguments('', localPath: path),
+              ),
+              child: Hero(
+                tag: ImageFullScreen.fullScreenHeroTag,
+                child: Image.file(
+                  File(path),
+                  fit: BoxFit.cover,
+                  cacheWidth: decodeWidthFor(context, 250),
+                  errorBuilder: (context, error, stack) =>
+                      const MealPlaceholder(),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
